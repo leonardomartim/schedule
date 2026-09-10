@@ -4,6 +4,7 @@ dist/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+.vscode/
 
 # Environment and editor
 .env
