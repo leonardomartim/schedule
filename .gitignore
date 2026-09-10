@@ -1,0 +1,13 @@
+# Build and dependencies
+node_modules/
+dist/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Environment and editor
+.env
+.env.*
+
+# Reference assets ignored as requested
+layout_reference/

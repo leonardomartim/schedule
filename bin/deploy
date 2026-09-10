@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -eu
+
+: "${DEPLOY_HOST:?DEPLOY_HOST is required}"
+: "${DEPLOY_USER:?DEPLOY_USER is required}"
+: "${DEPLOY_PATH:?DEPLOY_PATH is required}"
+
+npm run build
+scp -r dist/* "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
