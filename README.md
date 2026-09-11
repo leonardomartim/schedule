@@ -10,11 +10,12 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 
 ## MVP features
 
-- Daily schedule with categories, durations, completion states, and progress
+- Daily agenda stacks for morning, afternoon, and evening, with categories, durations, completion states, and progress
+- Add commitments directly to the daily agenda
 - Date strip for moving through the working week
 - Search across schedule titles and details
 - Quick notes on the daily view
-- Editable notes workspace with locally held state
+- Editable notes workspace; notes and agenda changes persist locally on the device
 - Responsive dark interface with warm orange highlights
 
 ## Stack
