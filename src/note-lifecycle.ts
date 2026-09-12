@@ -11,3 +11,7 @@ export function restoreNoteFromTrash(notes: Note[], noteId: number): Note[] {
     return activeNote
   })
 }
+
+export function permanentlyDeleteNote(notes: Note[], noteId: number): Note[] {
+  return notes.filter((note) => note.id !== noteId)
+}

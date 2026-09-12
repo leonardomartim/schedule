@@ -4,7 +4,7 @@ import { createAgendaStacks, getScheduleProgress, type ScheduleProgress } from '
 import { getScheduleCategoryPresentation } from './agenda-presentation'
 import { getGreetingForHour } from './greeting'
 import { getLocalClockSnapshot } from './local-clock'
-import { moveNoteToTrash, restoreNoteFromTrash } from './note-lifecycle'
+import { moveNoteToTrash, permanentlyDeleteNote, restoreNoteFromTrash } from './note-lifecycle'
 import { loadNotes, loadScheduleItems, saveNotes, saveScheduleItems } from './schedule-storage'
 import type { Note, ScheduleCategory, ScheduleItem } from './types'
 
@@ -68,6 +68,10 @@ export function App(): ReactNode {
     setNotes((currentNotes) => restoreNoteFromTrash(currentNotes, noteId))
   }
 
+  function deleteNotePermanently(noteId: number): void {
+    setNotes((currentNotes) => permanentlyDeleteNote(currentNotes, noteId))
+  }
+
   function chooseView(view: WorkspaceView): void {
     setActiveView(view)
     setIsSidebarOpen(false)
@@ -82,7 +86,7 @@ export function App(): ReactNode {
       <Topbar activeView={activeView} searchTerm={searchTerm} onSearchChange={setSearchTerm} timeLabel={localClock.timeLabel} timeZoneLabel={localClock.timeZoneLabel} />
       {activeView === 'Today' && <TodayView activeNotes={activeNotes} currentDate={currentDate} dateLabel={localClock.dateLabel} greeting={getGreetingForHour(localClock.hour)} items={visibleItems} allItems={items} progress={scheduleProgress} onToggle={toggleItem} onAddItem={createScheduleItem} onCreateNote={createNote} />}
       {activeView === 'Notes' && <NotesView notes={activeNotes} selectedNote={selectedNote} onCreate={createNote} onMoveToTrash={trashNote} onSelect={setSelectedNote} onUpdate={updateNote} />}
-      {activeView === 'Trash' && <TrashView notes={trashedNotes} onRestore={restoreNote} />}
+      {activeView === 'Trash' && <TrashView notes={trashedNotes} onDeletePermanently={deleteNotePermanently} onRestore={restoreNote} />}
     </main>
   </div>
 }
@@ -132,8 +136,16 @@ function NotesView({ notes, selectedNote, onCreate, onMoveToTrash, onSelect, onU
   return <section className="mx-auto max-w-[1190px]"><PageHeading kicker="Your thinking space" title="Notes" onAction={onCreate} actionLabel="New note" /><div className="grid min-h-105 border-y border-line lg:grid-cols-[20.625rem_minmax(0,1fr)]"><NoteList notes={notes} selectedNote={selectedNote} onSelect={onSelect} /><div className="flex min-h-87.5 flex-col p-7 sm:p-10 lg:p-12">{selectedNote ? <><div className="mb-6 flex items-start gap-4"><input className="min-w-0 flex-1 border-0 bg-transparent font-display text-3xl text-cream outline-none" value={selectedNote.title} onChange={(event) => onUpdate(selectedNote.id, { title: event.target.value, preview: selectedNote.preview })} aria-label="Note title" /><button className={`${iconButtonClassName} hover:text-orange`} onClick={() => onMoveToTrash(selectedNote.id)} aria-label="Move note to trash"><Trash2 size={17} /></button></div><textarea className="min-h-62.5 flex-1 resize-none border-0 bg-transparent text-sm leading-7 text-muted outline-none" value={selectedNote.preview} onChange={(event) => onUpdate(selectedNote.id, { title: selectedNote.title, preview: event.target.value })} aria-label="Note content" /><span className="mt-4 text-[10px] text-muted/70">Saved on this device · {selectedNote.updated}</span></> : <EmptyNotesEditor />}</div></div></section>
 }
 
-function TrashView({ notes, onRestore }: { notes: Note[]; onRestore: (noteId: number) => void }): ReactNode {
-  return <section className="mx-auto max-w-[1190px]"><PageHeading kicker="Recoverable notes" title="Trash" /><div className="border-y border-line py-3">{notes.length === 0 ? <div className="grid min-h-70 place-items-center text-center text-muted"><div><Trash2 className="mx-auto mb-3 text-orange" size={28} /><p className="m-0 text-sm">Trash is empty.</p></div></div> : notes.map((note) => <article className="flex items-center justify-between gap-4 border-b border-line px-3 py-4 last:border-b-0" key={note.id}><div className="min-w-0"><strong className="block text-[13px] font-semibold">{note.title}</strong><p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted">{note.preview}</p></div><button className="flex shrink-0 items-center gap-2 rounded border border-line px-3 py-2 text-xs text-cream transition hover:border-orange" onClick={() => onRestore(note.id)}><RotateCcw size={15} /> Restore</button></article>)}</div></section>
+function TrashView({ notes, onDeletePermanently, onRestore }: { notes: Note[]; onDeletePermanently: (noteId: number) => void; onRestore: (noteId: number) => void }): ReactNode {
+  const [pendingPermanentDelete, setPendingPermanentDelete] = useState<Note | null>(null)
+
+  return <section className="mx-auto max-w-[1190px]">
+    <PageHeading kicker="Recoverable notes" title="Trash" />
+    <div className="border-y border-line py-3">
+      {notes.length === 0 ? <div className="grid min-h-70 place-items-center text-center text-muted"><div><Trash2 className="mx-auto mb-3 text-orange" size={28} /><p className="m-0 text-sm">Trash is empty.</p></div></div> : notes.map((note) => <article className="flex items-center justify-between gap-4 border-b border-line px-3 py-4 last:border-b-0" key={note.id}><div className="min-w-0"><strong className="block text-[13px] font-semibold">{note.title}</strong><p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted">{note.preview}</p></div><div className="flex shrink-0 gap-2"><button className="flex items-center gap-2 rounded border border-line px-3 py-2 text-xs text-cream transition hover:border-orange" onClick={() => onRestore(note.id)}><RotateCcw size={15} /> Restore</button><button className="flex items-center gap-2 rounded border border-line px-3 py-2 text-xs text-muted transition hover:border-orange hover:text-orange" onClick={() => setPendingPermanentDelete(note)}><Trash2 size={15} /> Delete permanently</button></div></article>)}
+    </div>
+    {pendingPermanentDelete && <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" role="alertdialog" aria-modal="true" aria-labelledby="permanent-delete-title"><div className="w-full max-w-sm rounded-lg border border-line bg-surface p-5 shadow-2xl"><h2 className="font-display text-2xl" id="permanent-delete-title">Delete permanently?</h2><p className="mt-2 text-sm leading-6 text-muted">“{pendingPermanentDelete.title}” cannot be recovered after this action.</p><div className="mt-6 flex justify-end gap-3"><button className="rounded px-3 py-2 text-xs text-muted transition hover:text-cream" onClick={() => setPendingPermanentDelete(null)}>Cancel</button><button className="rounded bg-orange px-3 py-2 text-xs font-bold text-ink transition hover:bg-orange/85" onClick={() => { onDeletePermanently(pendingPermanentDelete.id); setPendingPermanentDelete(null) }}>Delete permanently</button></div></div></div>}
+  </section>
 }
 
 function PageHeading({ actionLabel, kicker, onAction, title }: { actionLabel?: string; kicker: string; onAction?: () => void; title: string }): ReactNode { return <div className="mt-10 mb-7 flex flex-col gap-6 md:mt-15 md:mb-11 md:flex-row md:items-end md:justify-between"><div><p className="mb-3 text-[10px] font-bold tracking-[.18em] text-orange uppercase">{kicker}</p><h1 className="font-display text-4xl leading-none tracking-tight sm:text-5xl">{title}<span className="text-orange">.</span></h1><p className="mt-4 text-[13px] text-muted">{title === 'Trash' ? 'Notes stay here until you restore them.' : 'Keep the good ideas close.'}</p></div>{onAction && <button className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs transition hover:border-muted" onClick={onAction}><CirclePlus className="text-orange" size={17} /> {actionLabel}</button>}</div> }

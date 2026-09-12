@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getGreetingForHour } from '../src/greeting'
-import { moveNoteToTrash, restoreNoteFromTrash } from '../src/note-lifecycle'
+import { moveNoteToTrash, permanentlyDeleteNote, restoreNoteFromTrash } from '../src/note-lifecycle'
 import type { Note } from '../src/types'
 
 const activeNote: Note = { id: 7, title: 'A note', preview: 'A thought', updated: 'Just now', accent: 'orange' }
@@ -21,5 +21,10 @@ describe('note trash lifecycle', () => {
     const trashedNotes = moveNoteToTrash([activeNote], activeNote.id, '2026-09-12T12:00:00.000Z')
     expect(trashedNotes[0]?.deletedAt).toBe('2026-09-12T12:00:00.000Z')
     expect(restoreNoteFromTrash(trashedNotes, activeNote.id)[0]).toEqual(activeNote)
+  })
+
+  it('removes a trashed note permanently only when requested', () => {
+    const trashedNotes = moveNoteToTrash([activeNote], activeNote.id, '2026-09-12T12:00:00.000Z')
+    expect(permanentlyDeleteNote(trashedNotes, activeNote.id)).toEqual([])
   })
 })
