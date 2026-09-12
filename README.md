@@ -12,10 +12,12 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 
 - Daily agenda stacks for morning, afternoon, and evening, with categories, durations, completion states, and progress
 - Add commitments directly to the daily agenda
+- Device-local time and greeting that update with the configured timezone
 - Date strip for moving through the working week
 - Search across schedule titles and details
 - Quick notes on the daily view
 - Editable notes workspace; notes and agenda changes persist locally on the device
+- Recoverable note deletion with a Trash workspace and restore action
 - Responsive dark interface with warm orange highlights
 
 ## Stack

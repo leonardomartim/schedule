@@ -1,0 +1,7 @@
+export type DayGreeting = 'Good morning' | 'Good afternoon' | 'Good evening'
+
+export function getGreetingForHour(hour: number): DayGreeting {
+  if (hour >= 5 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}

@@ -16,4 +16,5 @@ export interface Note {
   preview: string
   updated: string
   accent: 'orange' | 'blue' | 'cream'
+  deletedAt?: string
 }
