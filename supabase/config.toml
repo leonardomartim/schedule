@@ -1,0 +1,6 @@
+project_id = "schedule"
+
+# Signed-out users need this endpoint. Its handler validates credentials with
+# Supabase Auth and applies database-backed username/IP rate limits.
+[functions.username-sign-in]
+verify_jwt = false

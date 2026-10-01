@@ -9,6 +9,7 @@ vite.config.d.ts
 # Environment and editor
 .env
 .env.*
+!.env.example
 
 # Reference assets ignored as requested
 layout_reference/

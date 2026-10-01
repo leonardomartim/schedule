@@ -10,13 +10,18 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 
 ## MVP features
 
+- Supabase Google OAuth and username/email + password accounts with email confirmation
+- Three preference questions after registration: interests, distance, and event budget
+- Nearby upcoming event search with device location or manual city fallback
+- Owner-managed Supabase event catalog, ranked by saved preferences
+- Editable account preferences, persistent sessions, and sign-out
 - Daily agenda stacks for morning, afternoon, and evening, with categories, durations, completion states, and progress
 - Add commitments directly to the daily agenda
 - Device-local time and greeting that update with the configured timezone
 - Date strip for moving through the working week
 - Search across schedule titles and details
 - Quick notes on the daily view
-- Editable notes workspace; notes and agenda changes persist locally on the device
+- Editable notes workspace; notes and agenda changes persist locally per account on the device
 - Recoverable note deletion with a Trash workspace and restore action
 - Responsive dark interface with warm orange highlights
 
@@ -44,10 +49,12 @@ npm run test
 npm run build
 ```
 
+Follow [Supabase setup](docs/supabase-setup.md) to apply the migrations, deploy username sign-in, enable Google, and populate the real event catalog. A public Supabase key configures the browser client; database schema changes and provider configuration require project-owner access.
+
 ## Docker
 
 ```bash
-docker build -t schedule .
+docker build --build-arg VITE_SUPABASE_URL=https://opxcfxpdslvexjfzqbjm.supabase.co --build-arg VITE_SUPABASE_PUBLISHABLE_KEY=your-public-key -t schedule .
 docker run --rm -p 8080:80 schedule
 ```
 
