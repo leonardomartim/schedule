@@ -49,7 +49,7 @@ npm run test
 npm run build
 ```
 
-Follow [Supabase setup](docs/supabase-setup.md) to apply the migrations, deploy username sign-in, enable Google, and populate the real event catalog. A public Supabase key configures the browser client; database schema changes and provider configuration require project-owner access.
+Follow [Supabase setup](docs/supabase-setup.md) to apply the migrations, deploy username sign-in, enable Google, and populate the real event catalog. This project's public browser configuration is included, with optional environment overrides. Database schema changes and provider configuration require project-owner access.
 
 ## Docker
 

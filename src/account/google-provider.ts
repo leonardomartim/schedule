@@ -1,3 +1,5 @@
+import { supabaseConfiguration } from './supabase-configuration'
+
 const unavailableMessage = 'Could not check Google sign-in right now. Please try again or use your username or email and password.'
 
 function readGoogleProviderStatus(settings: unknown): boolean | null {
@@ -8,8 +10,8 @@ function readGoogleProviderStatus(settings: unknown): boolean | null {
 }
 
 export async function verifyGoogleProviderEnabled(
-  projectUrl = import.meta.env.VITE_SUPABASE_URL,
-  publicKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY,
+  projectUrl = supabaseConfiguration?.url,
+  publicKey = supabaseConfiguration?.publicKey,
 ): Promise<void> {
   if (!projectUrl || !publicKey) throw new Error('Sign-in is not configured yet. Please contact the site owner.')
   const controller = new AbortController()

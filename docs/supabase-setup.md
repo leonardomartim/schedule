@@ -4,7 +4,9 @@ The frontend supports Google OAuth, username/email and password sign-in, email-c
 
 ## 1. Public frontend settings
 
-Set these in Vercel → Project Settings → Environment Variables for the environments you deploy:
+This repository includes this Schedule project's public URL and publishable key in `src/account/supabase-configuration.ts`, so Vercel builds work without a local `.env` file. These browser credentials do not grant administrative access; database access remains protected by RLS.
+
+To use a different project, set **both** values in Vercel → Project Settings → Environment Variables for the environments you deploy:
 
 ```dotenv
 VITE_SUPABASE_URL=https://opxcfxpdslvexjfzqbjm.supabase.co
@@ -13,7 +15,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<the project's public publishable key>
 
 The project hostname ends in `.supabase.co`, not `.supabase.com`. A legacy `VITE_SUPABASE_ANON_KEY` is also supported. These variables are embedded at **build time**; redeploy after changing them. Never use a service-role key, secret API key, database password, or Google client secret in a `VITE_` variable.
 
-Local development reads `.env.local`. The supplied public key has already been set there; this file is ignored by Git. For other machines, copy `.env.example` to `.env.local` and fill in the public key.
+Local development can override the defaults with `.env.local`, which is ignored by Git. For a different project, copy `.env.example` to `.env.local` and fill in its URL and public key. A partial override is rejected to avoid mixing credentials from different projects. Both the Auth client and Google provider check use the same resolved configuration.
 
 ## 2. Apply the database migrations
 
@@ -97,4 +99,4 @@ npm run build
 
 Tests include an embedded PostgreSQL instance that executes both migrations and checks row-level security, profile creation, event filtering/ranking, and login throttling. UI tests cover confirmation instructions, onboarding save failures, location denial, and stale search responses. Google consent, email delivery, deployed Edge Functions, and production redirects still require a live check after configuration.
 
-Release builds use Git tags (`v*`). Set GitHub repository variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` before triggering the release workflow. Vercel should use `npm run build` and output directory `dist` with the same public environment settings.
+Release builds use Git tags (`v*`). Optional GitHub repository variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` override the public project defaults as a pair. Vercel should use `npm run build` and output directory `dist`.
