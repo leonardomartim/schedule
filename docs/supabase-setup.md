@@ -1,6 +1,6 @@
 # Account and event setup
 
-The frontend supports Google OAuth, username/email and password sign-in, email-confirmed registration, three-question onboarding, and searches over an owner-managed Supabase event catalog. Two SQL migrations and one Edge Function must be deployed before enabling the new frontend in production.
+The frontend supports Google OAuth, username/email and password sign-in, email-confirmed registration, three-question onboarding, and filtered searches over an owner-managed Supabase event catalog. Three SQL migrations and one Edge Function must be deployed before enabling the new frontend in production.
 
 ## 1. Public frontend settings
 
@@ -31,12 +31,15 @@ Alternatively, run the full contents of these files in the project's SQL Editor,
 
 1. `supabase/migrations/202609210001_accounts_and_events.sql`
 2. `supabase/migrations/202609210002_username_login_limits.sql`
+3. `supabase/migrations/202610080001_event_search_filters.sql`
 
 The first migration adds profiles, the account-creation trigger, the event catalog, and the nearby search RPC. Existing accounts receive profiles and will be asked for preferences on their next sign-in. New password accounts require a unique, case-insensitive username of 3–24 letters, numbers, or underscores. Google profiles use the Google display name; they do not require a separate username.
 
 Profiles are private to their owner. Clients may update only their own preferences. Catalog entries are visible to signed-in users only when published and still upcoming. Only the owner through the dashboard, or a trusted server, can create or modify catalog entries. No emails are stored in the public profile table.
 
 The second migration adds a private rate-limit table. Only the Edge Function's server role may consume login attempts: 10 per username and 60 per IP in a 10-minute window. Stored identifiers are hashes; expired buckets are cleaned during subsequent attempts.
+
+The third migration replaces the search RPC with compatible original arguments plus category, price, date bounds and sorting. Filters execute before the 100-result limit. It preserves RLS and authenticated-only execution, adds partial search indexes and reloads the PostgREST schema. Existing installations should apply only the pending third migration before deploying the updated frontend.
 
 ## 3. Deploy username sign-in
 
@@ -87,7 +90,7 @@ Use Supabase Table Editor → `public.events` to enter verified real events, or 
 
 Location searches use a 1–100 km radius and precise distance calculation. City searches match the entire city name case-insensitively, without a radius. Names in different countries can coincide, so use location search for precise nearby results. Keywords match literal text in the title, description, venue, or category. Preferences give matching interests first priority and the selected budget second priority; start date breaks ties. The top 100 results are returned. Event times display in the viewer's timezone, with its abbreviation.
 
-Coordinates are requested only after clicking **Use my location** and are sent to the project's search RPC; the app does not save them to profiles or local storage. Agenda entries and notes remain device-local, with separate storage keys per account; they are not cloud-synced. Pre-existing unauthenticated local data is left intact under its original keys.
+Device coordinates are requested only after clicking **Use my location** and are sent to the project's search RPC. Alternatively, **Find city on map** queries the public Open-Meteo geocoding API and lets the user choose a city before a radius search. Approximate coordinates, rounded to two decimal places, are sent to Open-Meteo for current weather. The user's search coordinates are not saved to profiles or local storage. Saved event records include venue coordinates, and their distance is recalculated for the current search location. Agenda entries, notes and saved events remain device-local, with separate storage keys per account; they are not cloud-synced. Pre-existing unauthenticated local data is left intact under its original keys.
 
 ## 6. Validate and release
 
@@ -97,6 +100,6 @@ npm test
 npm run build
 ```
 
-Tests include an embedded PostgreSQL instance that executes both migrations and checks row-level security, profile creation, event filtering/ranking, and login throttling. UI tests cover confirmation instructions, onboarding save failures, location denial, and stale search responses. Google consent, email delivery, deployed Edge Functions, and production redirects still require a live check after configuration.
+Tests include an embedded PostgreSQL instance that executes all migrations and checks row-level security, profile creation, event filtering/ranking before the result limit, and login throttling. UI tests cover confirmation instructions, onboarding save failures, location denial, stale search responses, city selection, saved events and dated agenda actions. Google consent, email delivery, deployed Edge Functions, and production redirects still require a live check after configuration.
 
 Release builds use Git tags (`v*`). Optional GitHub repository variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` override the public project defaults as a pair. Vercel should use `npm run build` and output directory `dist`.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scheduleItems } from '../src/data'
+import { scheduleItems } from './fixtures/workspace-seed'
 
 describe('schedule seed data', () => {
   it('starts with a focused daily agenda', () => {

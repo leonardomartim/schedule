@@ -18,6 +18,7 @@ beforeAll(async () => {
   `)
   await database.exec(readFileSync('supabase/migrations/202609210001_accounts_and_events.sql', 'utf8'))
   await database.exec(readFileSync('supabase/migrations/202609210002_username_login_limits.sql', 'utf8'))
+  await database.exec(readFileSync('supabase/migrations/202610080001_event_search_filters.sql', 'utf8'))
   await database.exec(`
     insert into auth.users values
       ('${firstUser}', '{"username":"leonardo"}', '{"provider":"email"}'),
@@ -82,6 +83,27 @@ describe('database authentication and event policies', () => {
       await expect(database.query('select * from public.profiles')).rejects.toThrow(/permission denied/)
       await expect(database.query("select * from public.search_upcoming_events(0, 0, null, 25, '', '{}', 'any')")).rejects.toThrow(/permission denied/)
     } finally { await database.exec('reset role') }
+  })
+  it('applies strict category, price and date filters before limiting and supports nearest ordering', async () => {
+    await asUser(async () => {
+      const free = await database.query<{ title: string }>(`select title from public.search_upcoming_events(p_city => 'São Paulo', p_category => 'music', p_price => 'free', p_sort => 'soonest')`)
+      expect(free.rows.map((row) => row.title)).toEqual(['Free music'])
+      const dates = await database.query<{ title: string }>(`select title from public.search_upcoming_events(p_city => 'São Paulo', p_starts_after => now() + interval '36 hours', p_starts_before => now() + interval '3 days')`)
+      expect(dates.rows.map((row) => row.title)).toEqual(['Free music'])
+      const nearest = await database.query<{ title: string }>(`select title from public.search_upcoming_events(p_latitude => -23.55, p_longitude => -46.63, p_radius_km => 100, p_sort => 'nearest')`)
+      expect(nearest.rows).toHaveLength(3)
+      await expect(database.query(`select * from public.search_upcoming_events(p_city => 'São Paulo', p_price => 'invalid')`)).rejects.toThrow()
+    })
+  })
+  it('does not discard filtered matches behind the first hundred recommendations', async () => {
+    await database.exec(`insert into public.events(title, category, starts_at, venue, city, latitude, longitude, price, published)
+      select 'Bulk ' || i, 'music', now() + interval '5 days', 'Hall', 'Filter City', 0, 0, 0, true from generate_series(1, 101) i;
+      insert into public.events(title, category, starts_at, venue, city, latitude, longitude, price, published)
+      values ('Filtered sport', 'sports', now() + interval '6 days', 'Hall', 'Filter City', 0, 0, 50, true);`)
+    await asUser(async () => {
+      const result = await database.query<{ title: string }>(`select title from public.search_upcoming_events(p_city => 'Filter City', p_category => 'sports', p_price => 'paid')`)
+      expect(result.rows).toEqual([{ title: 'Filtered sport' }])
+    })
   })
   it('limits repeated username attempts and resets expired buckets', async () => {
     const usernameHash = 'a'.repeat(64)

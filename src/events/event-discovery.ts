@@ -1,7 +1,8 @@
 import type { EventInterest, EventPreferences } from '../account/account-validation'
+import type { EventFilters } from './event-filters'
 
 export interface Coordinates { latitude: number; longitude: number }
-export interface EventSearch { city: string; coordinates?: Coordinates; query: string; radiusKm: number }
+export interface EventSearch { city: string; coordinates?: Coordinates; query: string; radiusKm: number; filters?: EventFilters }
 export interface DiscoveredEvent extends Coordinates {
   id: string
   title: string

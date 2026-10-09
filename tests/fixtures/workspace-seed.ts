@@ -1,4 +1,4 @@
-import type { Note, ScheduleItem } from './types'
+import type { Note, ScheduleItem } from '../../src/types'
 
 export const scheduleItems: ScheduleItem[] = [
   { id: 1, time: '08:30', title: 'Morning pages', detail: 'Clear the desk, make a plan', category: 'focus', duration: '30 min', completed: true },

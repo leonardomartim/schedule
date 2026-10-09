@@ -1,36 +1,40 @@
-import { notes as initialNotes, scheduleItems as initialScheduleItems } from './data'
 import type { Note, ScheduleItem } from './types'
+import { isStoredNote, isStoredScheduleItem } from './workspace-record-validation'
 
 const notesStorageKey = 'schedule.notes.v1'
 const scheduleStorageKey = 'schedule.items.v1'
 
-function loadStoredArray<T>(key: string, fallback: T[]): T[] {
-  if (typeof window === 'undefined') return fallback
+function loadStoredArray<T>(key: string, isRecord: (value: unknown) => value is T): T[] {
+  if (typeof window === 'undefined') return []
 
   try {
     const savedValue: unknown = JSON.parse(window.localStorage.getItem(key) ?? 'null')
-    return Array.isArray(savedValue) ? savedValue as T[] : fallback
+    return Array.isArray(savedValue) ? savedValue.filter(isRecord) : []
   } catch {
-    return fallback
+    return []
   }
 }
 
-function saveStoredArray<T>(key: string, values: T[]): void {
-  if (typeof window !== 'undefined') window.localStorage.setItem(key, JSON.stringify(values))
+function saveStoredArray<T>(key: string, values: T[]): boolean {
+  try {
+    if (typeof window === 'undefined') return false
+    window.localStorage.setItem(key, JSON.stringify(values))
+    return true
+  } catch { return false }
 }
 
-export function loadScheduleItems(userId?: string): ScheduleItem[] {
-  return loadStoredArray(userId ? `${scheduleStorageKey}.${userId}` : scheduleStorageKey, userId ? [] : initialScheduleItems)
+export function loadScheduleItems(userId: string): ScheduleItem[] {
+  return loadStoredArray(`${scheduleStorageKey}.${userId}`, isStoredScheduleItem)
 }
 
-export function saveScheduleItems(items: ScheduleItem[], userId?: string): void {
-  saveStoredArray(userId ? `${scheduleStorageKey}.${userId}` : scheduleStorageKey, items)
+export function saveScheduleItems(items: ScheduleItem[], userId: string): boolean {
+  return saveStoredArray(`${scheduleStorageKey}.${userId}`, items)
 }
 
-export function loadNotes(userId?: string): Note[] {
-  return loadStoredArray(userId ? `${notesStorageKey}.${userId}` : notesStorageKey, userId ? [] : initialNotes)
+export function loadNotes(userId: string): Note[] {
+  return loadStoredArray(`${notesStorageKey}.${userId}`, isStoredNote)
 }
 
-export function saveNotes(notes: Note[], userId?: string): void {
-  saveStoredArray(userId ? `${notesStorageKey}.${userId}` : notesStorageKey, notes)
+export function saveNotes(notes: Note[], userId: string): boolean {
+  return saveStoredArray(`${notesStorageKey}.${userId}`, notes)
 }

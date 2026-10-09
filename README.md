@@ -14,9 +14,14 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 - Three preference questions after registration: interests, distance, and event budget
 - Nearby upcoming event search with device location or manual city fallback
 - Owner-managed Supabase event catalog, ranked by saved preferences
+- Strict category, free/paid, date and distance filters; sort by match, date, distance or price
+- Saved events per account on this device, with one-click addition to the event's local agenda date
+- Highlighted search area with OpenStreetMap links and current Open-Meteo weather
+- Public city lookup through Open-Meteo / GeoNames, without API keys
 - Editable account preferences, persistent sessions, and sign-out
 - Daily agenda stacks for morning, afternoon, and evening, with categories, durations, completion states, and progress
 - Add commitments directly to the daily agenda
+- Browse dates, return to today, and remove agenda commitments
 - Device-local time and greeting that update with the configured timezone
 - Date strip for moving through the working week
 - Search across schedule titles and details
@@ -34,3 +39,5 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 - DM Serif Display and DM Sans
 - Vitest
 - Docker and Nginx for deployment
+
+Implementation, public APIs, migration status and verification: [post-login workspace](docs/post-login-workspace.md). Account and catalog configuration: [Supabase setup](docs/supabase-setup.md).

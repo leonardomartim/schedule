@@ -8,6 +8,8 @@ export interface ScheduleItem {
   category: ScheduleCategory
   duration: string
   completed: boolean
+  date?: string
+  eventId?: string
 }
 
 export interface Note {

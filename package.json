@@ -1,9 +1,11 @@
 {
   "name": "schedule-github-pages",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "engines": { "node": ">=24.15.0" },
+  "engines": {
+    "node": ">=24.15.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
