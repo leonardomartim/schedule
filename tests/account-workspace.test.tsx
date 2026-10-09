@@ -9,7 +9,7 @@ import { localDateKey } from '../src/event-agenda'
 import { searchCatalogEvents } from '../src/events/event-service'
 
 vi.mock('../src/account/AccountGate', () => ({ AccountGate: ({ children }: { children: (account: SignedInAccount) => ReactNode }) => children({ userId: 'workspace-user', displayName: 'Leo', preferences: { interests: ['music'], radiusKm: 25, budget: 'any' }, onSignOut: vi.fn(), onEditPreferences: vi.fn() }) }))
-vi.mock('../src/events/featured-events', async (importOriginal) => ({ ...await importOriginal<typeof import('../src/events/featured-events')>(), loadFeaturedEvents: vi.fn().mockResolvedValue([]) }))
+vi.mock('../src/events/public-event-service', () => ({ searchPublicEvents: vi.fn().mockResolvedValue({ events: [], sources: [], location: { kind: 'highlights', label: 'International highlights' }, page: 1, hasMore: false }) }))
 vi.mock('../src/account/supabase-client', () => ({ supabase: {} }))
 vi.mock('../src/events/event-service', () => ({ searchCatalogEvents: vi.fn(), requestDeviceLocation: vi.fn() }))
 
@@ -52,7 +52,7 @@ describe('post-login workspace', () => {
     vi.mocked(searchCatalogEvents).mockResolvedValue([{ id: 'concert', title: 'Tomorrow concert', description: '', category: 'music', startsAt: tomorrow.toISOString(), venue: 'Hall', city: 'São Paulo', latitude: 0, longitude: 0, price: 0, currency: 'BRL', url: null }])
     const user = userEvent.setup()
     render(<App />)
-    await user.type(await screen.findByLabelText('City'), 'São Paulo')
+    await user.type(await screen.findByLabelText('City or country'), 'São Paulo')
     await user.click(screen.getByRole('button', { name: 'Find events' }))
     await user.click(await screen.findByRole('button', { name: 'Add Tomorrow concert to agenda' }))
     expect(screen.getByRole('button', { name: 'Added Tomorrow concert to agenda' })).toHaveProperty('disabled', true)

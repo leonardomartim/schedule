@@ -1,6 +1,6 @@
 import { usePresentation } from '../presentation/PresentationProvider'
 import type { ReactNode } from 'react'
-import { eventInterests } from '../account/account-validation'
+import { eventCategories } from './event-discovery'
 import type { EventFilters } from './event-filters'
 
 interface EventFilterControlsProps { filters: EventFilters; hasCoordinates: boolean; onChange: (filters: EventFilters) => void; onClear: () => void }
@@ -9,7 +9,7 @@ export function EventFilterControls({ filters, hasCoordinates, onChange, onClear
   const { t } = usePresentation()
 
   return <div className="event-filter-fields">
-    <label>{t("Category")}<select value={filters.category} onChange={(event) => onChange({ ...filters, category: event.target.value as EventFilters['category'] })}><option value="all">{t("All categories")}</option>{eventInterests.map((interest) => <option value={interest} key={interest}>{t(interest.charAt(0).toUpperCase() + interest.slice(1))}</option>)}</select></label>
+    <label>{t("Category")}<select value={filters.category} onChange={(event) => onChange({ ...filters, category: event.target.value as EventFilters['category'] })}><option value="all">{t("All categories")}</option>{eventCategories.map((interest) => <option value={interest} key={interest}>{t(interest.charAt(0).toUpperCase() + interest.slice(1))}</option>)}</select></label>
     <label>{t("Price")}<select value={filters.budget} onChange={(event) => onChange({ ...filters, budget: event.target.value as EventFilters['budget'] })}><option value="any">{t("All prices")}</option><option value="free">{t("Free only")}</option><option value="paid">{t("Paid only")}</option></select></label>
     <label>{t("From date")}<input type="date" value={filters.dateFrom} onChange={(event) => onChange({ ...filters, dateFrom: event.target.value })} /></label>
     <label>{t("To date")}<input type="date" min={filters.dateFrom || undefined} value={filters.dateTo} onChange={(event) => onChange({ ...filters, dateTo: event.target.value })} /></label>

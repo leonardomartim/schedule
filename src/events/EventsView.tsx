@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Bookmark, Compass, MapPin, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { accountErrorMessage, eventInterests, type EventPreferences } from '../account/account-validation'
-import { supabase } from '../account/supabase-client'
 import { usePresentation } from '../presentation/PresentationProvider'
 import { distanceInKm, rankUpcomingEvents, validateEventSearch, type Coordinates, type DiscoveredEvent, type EventSearch } from './event-discovery'
 import { defaultEventFilters, filterEventResults, validateEventFilters, type EventFilters } from './event-filters'
-import { requestDeviceLocation, searchCatalogEvents } from './event-service'
+import { requestDeviceLocation } from './event-service'
 import { searchPublicCities, type PublicCity } from './public-location-service'
 import { loadSavedEvents, saveSavedEvents, toggleSavedEvent } from './saved-events'
-import { filterFeaturedEvents, loadFeaturedEvents, loadSearchCity, rememberSearchCity } from './featured-events'
+import { loadSearchCity } from './search-location-storage'
+import { useEventResults } from './useEventResults'
+import { eventCountryName } from './event-country-names'
 import { EventCard } from './EventCard'
 import { EventSearchPanel } from './EventSearchPanel'
 import { LocationSummary } from './LocationSummary'
@@ -24,59 +25,34 @@ export function EventsView({ preferences, onEditPreferences, userId, onAddToAgen
   const [locationLabel, setLocationLabel] = useState('Your current location')
   const [radiusKm, setRadiusKm] = useState(preferences.radiusKm)
   const [filters, setFilters] = useState<EventFilters>({ ...defaultEventFilters })
-  const [events, setEvents] = useState<DiscoveredEvent[]>([])
   const [savedEvents, setSavedEvents] = useState<DiscoveredEvent[]>(() => userId ? loadSavedEvents(userId) : [])
   const [savedOnly, setSavedOnly] = useState(false)
-  const [busy, setBusy] = useState(true)
   const [locating, setLocating] = useState(false)
   const [cityBusy, setCityBusy] = useState(false)
   const [cities, setCities] = useState<PublicCity[] | null>(null)
-  const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [searched, setSearched] = useState(false)
-  const [refresh, setRefresh] = useState(0)
+  const results = useEventResults(preferences, publicMode)
+  const { events, publicPage, busy, error, setError, searched, committedQuery } = results
   const requestVersion = useRef(0)
   const cityRequest = useRef<AbortController | null>(null)
-  const featuredEvents = useRef<DiscoveredEvent[]>([])
-  const committedSearch = useRef<EventSearch>({ city, query: '', radiusKm: preferences.radiusKm })
-  useEffect(() => {
-    const controller = new AbortController()
-    const version = ++requestVersion.current
-    setBusy(true); setError('')
-    void loadFeaturedEvents(controller.signal).then((results) => {
-      if (controller.signal.aborted) return
-      featuredEvents.current = results
-      setEvents((current) => [...current.filter((event) => !event.source), ...filterFeaturedEvents(results, committedSearch.current)])
-    }).catch((failure: unknown) => { if (!controller.signal.aborted) setError(accountErrorMessage(failure)) }).finally(() => { if (!controller.signal.aborted && requestVersion.current === version) setBusy(false) })
-    return () => { controller.abort(); requestVersion.current += 1; cityRequest.current?.abort() }
-  }, [refresh, preferences.radiusKm])
+  useEffect(() => () => { requestVersion.current += 1; cityRequest.current?.abort() }, [])
 
   const visibleEvents = useMemo(() => {
     const source = savedOnly ? rankUpcomingEvents(savedEvents, preferences).map((event) => ({ ...event, distanceKm: coordinates && event.latitude !== null && event.longitude !== null ? distanceInKm(coordinates, { latitude: event.latitude, longitude: event.longitude }) : undefined })) : events
     if (validateEventFilters(filters)) return []
-    return filterEventResults(source, filters, preferences).filter((event) => !query.trim() || `${event.title} ${event.description} ${event.venue} ${t(event.category)}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()))
-  }, [savedOnly, savedEvents, preferences, coordinates, events, filters, query, t])
+    return filterEventResults(source, filters, preferences).filter((event) => (!savedOnly && query === committedQuery) || !query.trim() || `${event.title} ${event.description} ${event.venue} ${t(event.category)}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()))
+  }, [savedOnly, savedEvents, preferences, coordinates, events, filters, query, committedQuery, t])
   const keywordSuggestions = [...new Set([...eventInterests.map((interest) => t(interest)), ...events.map((event) => event.title)])].slice(0, 20)
-  function resetResults(): void { requestVersion.current += 1; cityRequest.current?.abort(); setError(''); setBusy(false); setLocating(false); setCityBusy(false); setCities(null) }
+  const resultLocation = publicPage?.location
+  const resultLocationLabel = resultLocation?.countryCode ? `${resultLocation.kind === 'city' ? `${resultLocation.city}, ` : ''}${eventCountryName(resultLocation.countryCode, language)}` : t(resultLocation?.label ?? '')
+  function resetResults(): void { requestVersion.current += 1; cityRequest.current?.abort(); results.cancelSearch(); setLocating(false); setCityBusy(false); setCities(null) }
   async function search(searchInput: EventSearch, activeFilters = filters): Promise<void> {
-    const version = ++requestVersion.current
-    setBusy(true); setError(''); setSavedOnly(false)
+    requestVersion.current += 1; setError(''); setSavedOnly(false)
     try {
       const validation = validateEventFilters(activeFilters) || ((searchInput.city.trim() || searchInput.coordinates) ? validateEventSearch(searchInput) : null)
       if (validation) throw new Error(validation)
-      committedSearch.current = { ...searchInput, query: '' }
-      let catalog: DiscoveredEvent[] = []
-      if (!publicMode && (searchInput.city.trim() || searchInput.coordinates)) {
-        if (!supabase) throw new Error('Event search is not connected yet. Please contact the site owner.')
-        catalog = await searchCatalogEvents(supabase, { ...searchInput, filters: activeFilters }, preferences)
-      }
-      const combined = [...catalog, ...filterFeaturedEvents(featuredEvents.current, committedSearch.current)]
-      if (requestVersion.current === version) {
-        setEvents([...new Map(combined.map((event) => [event.id, event])).values()]); setSearched(true)
-        if (!searchInput.coordinates) rememberSearchCity(searchInput.city)
-      }
-    } catch (failure) { if (requestVersion.current === version) setError(accountErrorMessage(failure)) }
-    finally { if (requestVersion.current === version) setBusy(false) }
+      await results.search({ ...searchInput, filters: activeFilters })
+    } catch (failure: unknown) { setError(accountErrorMessage(failure)) }
   }
   async function useLocation(): Promise<void> {
     resetResults(); const version = requestVersion.current; setLocating(true)
@@ -104,11 +80,11 @@ export function EventsView({ preferences, onEditPreferences, userId, onAddToAgen
   function selectSuggestedCity(selected: PublicCity): void {
     resetResults(); const name = selected.name ?? selected.label.split(',')[0]
     setCoordinates(undefined); setCity(name); setCityPreview(selected)
-    void search({ city: name, query, radiusKm })
+    void search({ city: name, query, radiusKm, countryCode: selected.countryCode })
   }
   function changeFilters(next: EventFilters): void {
     resetResults(); setFilters(next)
-    if (!publicMode && !savedOnly && searched && (city.trim() || coordinates)) void search({ city, query, coordinates, radiusKm }, next)
+    if (!savedOnly && searched) void search({ city, query, coordinates, radiusKm, countryCode: cityPreview?.countryCode }, next)
   }
   function clearLocation(): void { resetResults(); setCoordinates(undefined); setCityPreview(null); setFilters((current) => ({ ...current, sort: current.sort === 'nearest' ? 'recommended' : current.sort })) }
   function saveEvent(event: DiscoveredEvent): void {
@@ -116,17 +92,18 @@ export function EventsView({ preferences, onEditPreferences, userId, onAddToAgen
     const next = toggleSavedEvent(savedEvents, event); setSavedEvents(next)
     setNotice(userId && !saveSavedEvents(userId, next) ? 'Saved for this session. Browser storage is unavailable.' : '')
   }
-  function submit(event: FormEvent<HTMLFormElement>): void { event.preventDefault(); void search({ city, query, coordinates, radiusKm }) }
+  function submit(event: FormEvent<HTMLFormElement>): void { event.preventDefault(); void search({ city, query, coordinates, radiusKm, countryCode: cityPreview?.countryCode }) }
   return <section className={`events-page ${publicMode ? 'public-events-page' : ''}`}>
     {!publicMode && <><div className="events-heading"><div><span className="feature-kicker">{t('Good things, closer to home')}</span><h1>{t('Out there.')} <em>{t('For you.')}</em></h1><p className="feature-subtitle">{t('Discover your next plan, just around the corner.')}</p></div>{onEditPreferences && <button className="feature-button secondary" onClick={onEditPreferences}><SlidersHorizontal size={16} />{t('Your preferences')}</button>}</div><div className="event-preference-summary"><Sparkles size={15} /><span>{t('Picked for your interests:')}</span>{preferences.interests.map((interest) => <span className="interest-tag" key={interest}>{t(interest)}</span>)}<span className="budget-summary">{t(preferences.budget === 'free' ? 'Free events first' : preferences.budget === 'paid' ? 'Paid experiences first' : 'All budgets welcome')}</span></div></>}
     <EventSearchPanel city={city} query={query} radiusKm={radiusKm} hasCoordinates={Boolean(coordinates)} filters={filters} busy={busy} locating={locating} cityBusy={cityBusy} publicMode={publicMode} cities={cities} keywordSuggestions={keywordSuggestions} onSubmit={submit} onQueryChange={(value) => { resetResults(); setQuery(value) }} onCityChange={(value) => { clearLocation(); setCity(value) }} onCitySelect={selectSuggestedCity} onMapCitySelect={selectMapCity} onRadiusChange={(value) => { resetResults(); setRadiusKm(value) }} onFiltersChange={changeFilters} onClearFilters={() => changeFilters({ ...defaultEventFilters })} onUseLocation={() => void useLocation()} onFindCity={() => void findCity()} />
     {(coordinates || cityPreview) && <LocationSummary coordinates={coordinates ?? cityPreview!} label={cityPreview?.label ?? t(locationLabel)} radiusKm={coordinates ? radiusKm : undefined} onClear={clearLocation} />}
-    {error && <div className="event-load-error"><p role="alert" className="feature-error">{t(error)}</p><button className="feature-button secondary" onClick={() => { setRefresh((value) => value + 1) }}>{t('Try again')}</button></div>}{notice && <p role="status" className="feature-notice">{t(notice)}</p>}
+    {error && <div className="event-load-error"><p role="alert" className="feature-error">{t(error)}</p><button className="feature-button secondary" onClick={() => void results.retry()}>{t('Try again')}</button></div>}{notice && <p role="status" className="feature-notice">{t(notice)}</p>}
     <div className="event-results-heading"><div className="event-result-tabs"><button aria-pressed={!savedOnly} onClick={() => setSavedOnly(false)}>{t('Upcoming events')}</button>{!publicMode && <button aria-pressed={savedOnly} onClick={() => { resetResults(); setSavedOnly(true) }}><Bookmark size={14} />{t('Saved events')} ({savedEvents.length})</button>}</div><span aria-live="polite">{t('{count} found', { count: visibleEvents.length })}</span></div>
-    {events.some((event) => event.source) && !savedOnly && <p className="event-source-note">{t('Public events currently cover São Paulo, from the official SP Mais Cultura agenda.')}</p>}
+    {!savedOnly && publicPage && <div className="event-source-note"><strong>{t('Results for {location}', { location: resultLocationLabel })}</strong><p>{t('Available sources: {sources}', { sources: [...new Set(publicPage.sources.filter((source) => source.status === 'ok').map((source) => source.name))].join(', ') || [...new Set(events.flatMap((event) => event.source ? [event.source] : []))].join(', ') })}</p></div>}
+    {!savedOnly && (results.catalogWarning || publicPage?.sources.some((source) => source.status === 'unavailable')) && <p role="status" className="feature-notice">{t('Some sources are unavailable. These results may be incomplete.')}</p>}
     {(busy || locating || cityBusy) && <div className="event-loading" role="status"><Compass size={20} className="search-pulse" /><span>{t(locating ? 'Finding your neighborhood…' : cityBusy ? 'Finding your city…' : 'Loading upcoming events…')}</span></div>}
-    {visibleEvents.length === 0 && !busy && !locating && !cityBusy && !error && <div className="event-empty" role="status"><span><MapPin size={30} /></span><h3>{t(savedOnly ? 'No saved events match these filters.' : searched ? 'No upcoming events found.' : 'No events match your search.')}</h3><p>{t(savedOnly ? 'Save an event or clear your filters to see more plans.' : 'Clear the keyword or filters to explore more events.')}</p><button className="feature-button secondary" onClick={() => { resetResults(); setQuery(''); setCity(''); setCoordinates(undefined); setCityPreview(null); setFilters({ ...defaultEventFilters }); setEvents(featuredEvents.current); committedSearch.current = { city: '', query: '', radiusKm }; setSavedOnly(false); rememberSearchCity('') }}>{t('Search all events')}</button></div>}
+    {visibleEvents.length === 0 && !busy && !locating && !cityBusy && !error && <div className="event-empty" role="status"><span><MapPin size={30} /></span><h3>{t(savedOnly ? 'No saved events match these filters.' : searched ? 'No upcoming events found.' : 'No events match your search.')}</h3><p>{t(savedOnly ? 'Save an event or clear your filters to see more plans.' : 'Coverage depends on local listings. Try another city, country or fewer filters.')}</p><button className="feature-button secondary" onClick={() => { resetResults(); setQuery(''); setCity(''); setCoordinates(undefined); setCityPreview(null); setFilters({ ...defaultEventFilters }); setSavedOnly(false); void results.resetSearch(radiusKm) }}>{t('Search all events')}</button></div>}
     {visibleEvents.length > 0 && <div className="event-grid" aria-busy={busy}>{visibleEvents.map((event) => <EventCard key={event.id} event={event} preferences={preferences} saved={savedEvents.some((saved) => saved.id === event.id)} inAgenda={agendaEventIds.includes(event.id)} onToggleSaved={() => saveEvent(event)} onAddToAgenda={publicMode ? undefined : onAddToAgenda ? () => onAddToAgenda(event) : undefined} />)}</div>}
-    {!savedOnly && events.length === 100 && <p className="feature-subtitle">{t('Showing up to 100 matches. Narrow your keyword, dates or distance for more specific results.')}</p>}
+    {!savedOnly && publicPage?.hasMore && <button className="feature-button secondary event-load-more" disabled={busy} onClick={() => void results.loadMore()}>{t(busy ? 'Searching…' : 'Load more events')}</button>}
   </section>
 }

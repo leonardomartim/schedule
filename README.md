@@ -10,9 +10,9 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 
 ## MVP features
 
-- Public upcoming events before login, sourced from the official SP Mais Cultura agenda in São Paulo
+- Public upcoming events before login from Sympla in Brazil, Eventbrite internationally, and SP Mais Cultura
 - Portuguese/English interface and persistent monochrome light/dark themes, keeping the existing fonts
-- City autocomplete, keyword suggestions and compact filters with manual fallback
+- City/country search, autocomplete, keyword suggestions, pagination and compact filters with manual fallback
 - Supabase Google OAuth and username/email + password accounts with email confirmation
 - Three preference questions after registration: interests, distance, and event budget
 - Nearby upcoming event search with device location or manual city fallback

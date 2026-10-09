@@ -6,6 +6,13 @@ import type { DiscoveredEvent } from '../src/events/event-discovery'
 afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
 const event: DiscoveredEvent = { id: 'concert', title: 'Concert', description: '', category: 'music', startsAt: '2027-01-05T18:00:00Z', venue: 'Hall', city: 'São Paulo', latitude: 0, longitude: 0, price: 0, currency: 'BRL', url: null }
 describe('account saved events', () => {
+  it('round-trips international sources and their timezone while rejecting invalid timezone metadata', () => {
+    const international: DiscoveredEvent = { ...event, source: 'Eventbrite', countryCode: 'JP', timeZone: 'Asia/Tokyo', category: 'other' }
+    saveSavedEvents('first', [international])
+    expect(loadSavedEvents('first')).toEqual([international])
+    localStorage.setItem('schedule.saved-events.v1.first', JSON.stringify([{ ...international, timeZone: 'invalid-zone' }]))
+    expect(loadSavedEvents('first')).toEqual([])
+  })
   it('round-trips official public events without inventing a price or venue coordinates', () => {
     const publicEvent: DiscoveredEvent = { ...event, latitude: null, longitude: null, price: null, source: 'SP Mais Cultura' }
     expect(saveSavedEvents('first', [publicEvent])).toBe(true)

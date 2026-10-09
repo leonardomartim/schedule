@@ -22,10 +22,11 @@ Regression tests cover all workspace views, keyboard dismissal, pending/failing 
 - [Open-Meteo weather](https://open-meteo.com/en/docs): current temperature and weather code for the selected search location, with coordinates rounded to two decimal places.
 - [Open-Meteo terms](https://open-meteo.com/en/terms): the hosted free endpoints are for non-commercial use. Commercial deployments need an appropriate provider plan and endpoint configuration.
 - OpenStreetMap links open the selected search area or event venue. No map tiles are loaded until a user follows a link.
+- [Photon / OpenStreetMap](https://github.com/komoot/photon): reverse geocoding after the explicit GPS action to select regional event providers.
 
 Public requests have an eight-second timeout, support cancellation, and ignore responses for replaced locations. Weather failure never prevents catalog discovery. Device geolocation is requested only by the location button; city search is available after denial. Search coordinates are not persisted. Weather is current weather, rather than a forecast for the event date.
 
-The authenticated catalog requires verified, published entries in Supabase. The public homepage now also loads real events from SP Mais Cultura; see [public homepage](public-event-homepage.md) for coverage and runtime requirements. No fabricated catalog entries were introduced.
+The authenticated catalog requires verified, published entries in Supabase. Public discovery in the homepage and workspace also queries Sympla, Eventbrite and SP Mais Cultura according to the selected city or country; see [public homepage](public-event-homepage.md) for coverage and runtime requirements. Event cards and date filters respect venue timezones, while adding to the personal agenda converts the instant to the browser's local timezone. No fabricated catalog entries were introduced.
 
 ## Structure and unused-file review
 

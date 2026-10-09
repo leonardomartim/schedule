@@ -6,6 +6,11 @@ const event: DiscoveredEvent = { id: 'music', title: 'Concert', description: '',
 const preferences = { interests: ['music'], radiusKm: 25, budget: 'free' } as const
 
 describe('event filters', () => {
+  it('filters international listings by the calendar day at the venue', () => {
+    const tokyo = { ...event, startsAt: '2027-01-04T23:30:00Z', timeZone: 'Asia/Tokyo' }
+    expect(filterEventResults([tokyo], { ...defaultEventFilters, dateFrom: '2027-01-05', dateTo: '2027-01-05' }, preferences)).toEqual([tokyo])
+    expect(filterEventResults([tokyo], { ...defaultEventFilters, dateTo: '2027-01-04' }, preferences)).toEqual([])
+  })
   it('combines category, price, dates and saved events without treating unknown prices as free', () => {
     const events = [event, { ...event, id: 'unknown', price: null }, { ...event, id: 'sport', category: 'sports' as const }]
     const filters = { ...defaultEventFilters, category: 'music' as const, budget: 'free' as const, dateFrom: '2027-01-05', dateTo: '2027-01-05' }

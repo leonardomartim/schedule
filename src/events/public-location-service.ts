@@ -1,6 +1,6 @@
 import type { Coordinates } from './event-discovery'
 
-export interface PublicCity extends Coordinates { id: number; label: string; name?: string }
+export interface PublicCity extends Coordinates { id: number; label: string; name?: string; countryCode?: string }
 export interface LocalWeather { temperature: number; description: string }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -35,7 +35,7 @@ export async function searchPublicCities(query: string, signal?: AbortSignal, la
     if (!isRecord(city) || typeof city.id !== 'number' || typeof city.name !== 'string' ||
       typeof city.latitude !== 'number' || typeof city.longitude !== 'number' || !Number.isFinite(city.latitude) ||
       !Number.isFinite(city.longitude) || Math.abs(city.latitude) > 90 || Math.abs(city.longitude) > 180) return []
-    return [{ id: city.id, name: city.name, label: [city.name, city.admin1, city.country].filter((part): part is string => typeof part === 'string' && part.length > 0).join(', '), latitude: city.latitude, longitude: city.longitude }]
+    return [{ id: city.id, name: city.name, label: [city.name, city.admin1, city.country].filter((part): part is string => typeof part === 'string' && part.length > 0).join(', '), latitude: city.latitude, longitude: city.longitude, ...(typeof city.country_code === 'string' ? { countryCode: city.country_code } : {}) }]
   })
 }
 

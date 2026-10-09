@@ -13,10 +13,10 @@ export function PublicLanding({ authScreen, authenticationError = '' }: { authSc
   useEffect(() => { if (authenticationError) setAuthOpen(true) }, [authenticationError])
   return <div className="public-landing">
     <header className="public-header"><a className="account-brand" href="."><span>S</span>schedule</a><a href="#discover" className="public-discover-link">{t('Explore events')}</a><div className="public-header-actions"><DisplayControls /><button className="feature-button" onClick={() => setAuthOpen(true)}>{t('Sign in')}<ArrowUpRight size={16} /></button></div></header>
-    <main id="discover"><section className="public-hero"><span className="feature-kicker">{t('Events worth making time for.')}</span><h1>{t('Explore the city.')}<br /><em>{t('Make a little room.')}</em></h1><p>{t('Browse real events. Sign in to save your favorites and organize your day.')}</p><span className="public-region-label"><span />{t('Public agenda · São Paulo')}</span></section>
+    <main id="discover"><section className="public-hero"><span className="feature-kicker">{t('Events worth making time for.')}</span><h1>{t('Explore the city.')}<br /><em>{t('Make a little room.')}</em></h1><p>{t('Browse real events. Sign in to save your favorites and organize your day.')}</p><span className="public-region-label"><span />{t('Cities, countries and new possibilities')}</span></section>
       <EventsView publicMode preferences={publicPreferences} onRequestSignIn={() => setAuthOpen(true)} />
     </main>
-    <footer className="public-footer"><span>schedule</span><p>{t('A clear day is a kind of freedom.')}</p><a href="https://spmaiscultura.prefeitura.sp.gov.br/" target="_blank" rel="noopener noreferrer">SP Mais Cultura <ArrowUpRight size={13} /></a></footer>
+    <footer className="public-footer"><span>schedule</span><p>{t('A clear day is a kind of freedom.')}</p><a href="https://www.sympla.com.br/" target="_blank" rel="noopener noreferrer">Sympla <ArrowUpRight size={13} /></a><a href="https://www.eventbrite.com/" target="_blank" rel="noopener noreferrer">Eventbrite <ArrowUpRight size={13} /></a></footer>
     {authOpen && <SignInDialog onClose={() => setAuthOpen(false)}>{authScreen}</SignInDialog>}
   </div>
 }

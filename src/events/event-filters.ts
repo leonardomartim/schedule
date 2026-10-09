@@ -1,8 +1,8 @@
-import { eventPreferenceScore, type DiscoveredEvent } from './event-discovery'
-import type { EventBudget, EventInterest, EventPreferences } from '../account/account-validation'
+import { eventPreferenceScore, type DiscoveredEvent, type EventCategory } from './event-discovery.js'
+import type { EventBudget, EventPreferences } from '../account/account-validation'
 
 export interface EventFilters {
-  category: EventInterest | 'all'
+  category: EventCategory | 'all'
   budget: EventBudget
   dateFrom: string
   dateTo: string
@@ -37,7 +37,7 @@ export function filterEventResults(events: DiscoveredEvent[], filters: EventFilt
   const saved = new Set(savedIds)
   return events.filter((event) => (filters.category === 'all' || event.category === filters.category) &&
     (filters.budget === 'any' || (filters.budget === 'free' ? event.price === 0 : event.price !== null && event.price > 0)) &&
-    (!after || Date.parse(event.startsAt) >= Date.parse(after)) && (!before || Date.parse(event.startsAt) < Date.parse(before)) &&
+    (event.timeZone ? eventMatchesVenueDates(event, filters) : (!after || Date.parse(event.startsAt) >= Date.parse(after)) && (!before || Date.parse(event.startsAt) < Date.parse(before))) &&
     (!savedOnly || saved.has(event.id))).sort((first, second) => {
       if (filters.sort === 'nearest') return (first.distanceKm ?? Infinity) - (second.distanceKm ?? Infinity) || Date.parse(first.startsAt) - Date.parse(second.startsAt)
       if (filters.sort === 'price') return (first.price ?? Infinity) - (second.price ?? Infinity) || Date.parse(first.startsAt) - Date.parse(second.startsAt)
@@ -47,4 +47,11 @@ export function filterEventResults(events: DiscoveredEvent[], filters: EventFilt
       }
       return Date.parse(first.startsAt) - Date.parse(second.startsAt)
     })
+}
+
+function eventMatchesVenueDates(event: DiscoveredEvent, filters: EventFilters): boolean {
+  if (!filters.dateFrom && !filters.dateTo) return true
+  const fields = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: event.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(event.startsAt)).map((part) => [part.type, part.value]))
+  const day = `${fields.year}-${fields.month}-${fields.day}`
+  return (!filters.dateFrom || day >= filters.dateFrom) && (!filters.dateTo || day <= filters.dateTo)
 }

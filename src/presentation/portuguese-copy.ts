@@ -2,6 +2,14 @@ import { accountPortugueseCopy } from './account-portuguese-copy'
 import { workspacePortugueseCopy } from './workspace-portuguese-copy'
 
 export const portugueseCopy: Readonly<Record<string, string>> = {
+  'City or country': 'Cidade ou país', 'Curitiba, Japan, London…': 'Curitiba, Japão, Londres…',
+  'Cities, countries and new possibilities': 'Cidades, países e novas possibilidades',
+  'International highlights': 'Destaques internacionais', 'Results for {location}': 'Resultados para {location}',
+  'Available sources: {sources}': 'Fontes disponíveis: {sources}', 'Load more events': 'Carregar mais eventos',
+  'Some sources are unavailable. These results may be incomplete.': 'Algumas fontes estão indisponíveis. Os resultados podem estar incompletos.',
+  'Location not found. Try a city and country.': 'Localidade não encontrada. Tente informar cidade e país.',
+  'Coverage depends on local listings. Try another city, country or fewer filters.': 'A cobertura depende das agendas locais. Tente outra cidade, país ou menos filtros.',
+  'Search all cities in {country}': 'Buscar em todas as cidades de {country}', 'other': 'Outros', 'Other': 'Outros',
   ...accountPortugueseCopy, ...workspacePortugueseCopy,
   'Event categories': 'Categorias de eventos', 'Next up': 'A seguir', 'item': 'compromisso', 'items': 'compromissos',
   'Public events currently cover São Paulo, from the official SP Mais Cultura agenda.': 'A agenda pública cobre São Paulo, com eventos da agenda oficial SP Mais Cultura.',

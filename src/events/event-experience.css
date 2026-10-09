@@ -29,3 +29,4 @@
 @media (max-width: 1150px) { .event-filter-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } .location-summary { flex-wrap: wrap; } .location-weather { margin-left: 85px; } }
 @media (max-width: 650px) { .event-filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .location-summary { padding: 20px; gap: 15px; } .location-marker { width: 45px; height: 45px; } .location-summary-copy { flex-basis: calc(100% - 60px); } .location-summary h2 { font-size: 22px; } .location-weather { margin-left: 60px; } .event-results-heading { align-items: flex-start; } .event-result-tabs { gap: 10px; } .event-result-tabs button { font-size: 11px; } .event-location-row { flex-wrap: wrap; gap: 15px; } }
 @media (max-width: 380px) { .event-filter-fields { grid-template-columns: 1fr; } .event-results-heading { flex-direction: column; } }
+.event-load-more { display: flex; margin: 28px auto 0; }

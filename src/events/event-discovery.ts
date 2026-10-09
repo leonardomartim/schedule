@@ -1,23 +1,30 @@
-import type { EventInterest, EventPreferences } from '../account/account-validation'
+import type { EventPreferences } from '../account/account-validation'
 import type { EventFilters } from './event-filters'
+import { eventInterests } from '../account/account-validation.js'
+
+export const eventCategories = [...eventInterests, 'other'] as const
+export type EventCategory = typeof eventCategories[number]
 
 export interface Coordinates { latitude: number; longitude: number }
-export interface EventSearch { city: string; coordinates?: Coordinates; query: string; radiusKm: number; filters?: EventFilters }
+export interface EventSearch { city: string; coordinates?: Coordinates; query: string; radiusKm: number; filters?: EventFilters; countryCode?: string }
 export interface DiscoveredEvent {
   latitude: number | null
   longitude: number | null
   id: string
   title: string
   description: string
-  category: EventInterest
+  category: EventCategory
   startsAt: string
   venue: string
   city: string
   price: number | null
-  currency: string
+  currency: string | null
   url: string | null
   distanceKm?: number
-  source?: 'SP Mais Cultura'
+  source?: 'SP Mais Cultura' | 'Sympla' | 'Eventbrite'
+  countryCode?: string
+  region?: string
+  timeZone?: string
 }
 
 export function distanceInKm(first: Coordinates, second: Coordinates): number {
@@ -39,7 +46,7 @@ export function validateEventSearch(search: EventSearch): string | null {
 }
 
 export function eventPreferenceScore(event: DiscoveredEvent, preferences: EventPreferences): number {
-  const interestScore = preferences.interests.includes(event.category) ? 2 : 0
+  const interestScore = preferences.interests.some((interest) => interest === event.category) ? 2 : 0
   const budgetScore = (preferences.budget === 'free' && event.price === 0) ||
     (preferences.budget === 'paid' && event.price !== null && event.price > 0) ? 1 : 0
   return interestScore + budgetScore

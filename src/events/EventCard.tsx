@@ -3,11 +3,13 @@ import { ArrowUpRight, Bookmark, CalendarDays, MapPin, Plus, Sparkles } from 'lu
 import type { EventPreferences } from '../account/account-validation'
 import { usePresentation } from '../presentation/PresentationProvider'
 import { safeEventUrl, type DiscoveredEvent } from './event-discovery'
+import { eventCountryName } from './event-country-names'
 
 interface EventCardProps { event: DiscoveredEvent; preferences: EventPreferences; saved: boolean; inAgenda: boolean; onToggleSaved: () => void; onAddToAgenda?: () => void }
 function formatEventPrice(event: DiscoveredEvent, locale: string, t: (message: string) => string): string {
   if (event.price === null) return t('Price not listed')
   if (event.price === 0) return t('Free')
+  if (!event.currency) return String(event.price)
   try { return new Intl.NumberFormat(locale, { style: 'currency', currency: event.currency }).format(event.price) }
   catch { return `${event.price} ${event.currency}` }
 }
@@ -17,12 +19,12 @@ export function EventCard({ event, preferences, saved, inAgenda, onToggleSaved, 
   const date = new Date(event.startsAt)
   const directionsUrl = event.latitude !== null && event.longitude !== null ? `https://www.openstreetmap.org/?mlat=${event.latitude}&mlon=${event.longitude}#map=16/${event.latitude}/${event.longitude}` : `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${event.venue}, ${event.city}`)}`
   return <article className={`event-card event-category-${event.category}`}>
-    <div className="event-card-banner"><span className="event-date"><strong>{date.toLocaleDateString(locale, { day: 'numeric' })}</strong>{date.toLocaleDateString(locale, { month: 'short' })}</span><span className="event-category">{t(event.category)}</span><CalendarDays className="event-banner-icon" size={92} strokeWidth={0.8} aria-hidden="true" /></div>
+    <div className="event-card-banner"><span className="event-date"><strong>{date.toLocaleDateString(locale, { day: 'numeric', timeZone: event.timeZone })}</strong>{date.toLocaleDateString(locale, { month: 'short', timeZone: event.timeZone })}</span><span className="event-category">{t(event.category)}</span><CalendarDays className="event-banner-icon" size={92} strokeWidth={0.8} aria-hidden="true" /></div>
     <div className="event-card-content">
-      {preferences.interests.includes(event.category) && <span className="event-match"><Sparkles size={12} />{t('Matches your interests')}</span>}
+      {preferences.interests.some((interest) => interest === event.category) && <span className="event-match"><Sparkles size={12} />{t('Matches your interests')}</span>}
       <h3>{event.title}</h3><p className="event-card-description">{event.description}</p>
-      <time dateTime={event.startsAt}>{date.toLocaleString(locale, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}</time>
-      <p className="event-venue"><MapPin size={14} />{event.venue} · {event.city}{event.distanceKm !== undefined && ` · ${event.distanceKm.toLocaleString(locale, { maximumFractionDigits: 1 })} km`}</p>
+      <time dateTime={event.startsAt}>{date.toLocaleString(locale, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone: event.timeZone })}</time>
+      <p className="event-venue"><MapPin size={14} />{event.venue} · {event.city}{event.countryCode && `, ${eventCountryName(event.countryCode, locale)}`}{event.distanceKm !== undefined && ` · ${event.distanceKm.toLocaleString(locale, { maximumFractionDigits: 1 })} km`}</p>
       {event.source && <p className="event-card-source">{t('Source: {source}', { source: event.source })}</p>}
       <div className="event-card-footer"><strong>{formatEventPrice(event, locale, t)}</strong>{url && <a href={url} target="_blank" rel="noopener noreferrer">{t(event.source ? 'Official agenda' : 'Event details')}<ArrowUpRight size={15} /></a>}</div>
       <div className="event-card-actions">
