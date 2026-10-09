@@ -1,16 +1,21 @@
+import { usePresentation } from '../presentation/PresentationProvider'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { ArrowRight, CalendarDays, MapPin, Sparkles } from 'lucide-react'
 import { accountErrorMessage, validateRegistration, type RegistrationFields } from './account-validation'
+import { DisplayControls } from '../presentation/DisplayControls'
 
 interface AuthScreenProps {
   configured: boolean
+  embedded?: boolean
   initialError?: string
   onSignIn: (identifier: string, password: string) => Promise<void>
   onRegister: (fields: RegistrationFields) => Promise<boolean>
   onGoogle: () => Promise<void>
 }
 
-export function AuthScreen({ configured, initialError = '', onSignIn, onRegister, onGoogle }: AuthScreenProps): ReactNode {
+export function AuthScreen({ configured, embedded = false, initialError = '', onSignIn, onRegister, onGoogle }: AuthScreenProps): ReactNode {
+  const { t } = usePresentation()
+
   const [registering, setRegistering] = useState(false)
   const [identifier, setIdentifier] = useState('')
   const [email, setEmail] = useState('')
@@ -42,36 +47,37 @@ export function AuthScreen({ configured, initialError = '', onSignIn, onRegister
 
   return <main className="account-page">
     <section className="account-story">
-      <a className="account-brand" href="."><span>S</span> schedule</a>
+      <a className="account-brand" href="."><span>{t("S")}</span> {t("schedule")}</a>
       <div className="account-story-copy">
-        <span className="feature-kicker">A little more life in your day</span>
-        <h1>Make room for<br />something <em>good.</em></h1>
-        <p>Your plans, your interests, your neighborhood. Find something worth stepping out for.</p>
+        <span className="feature-kicker">{t("A little more life in your day")}</span>
+        <h1>{t("Make room for")}<br />{t("something")} <em>{t("good.")}</em></h1>
+        <p>{t("Your plans, your interests, your neighborhood. Find something worth stepping out for.")}</p>
         <div className="account-highlights">
-          <div><MapPin size={19} /><span>Discover events close to you</span></div>
-          <div><Sparkles size={19} /><span>Recommendations that feel like you</span></div>
-          <div><CalendarDays size={19} /><span>Keep your day in one calm place</span></div>
+          <div><MapPin size={19} /><span>{t("Discover events close to you")}</span></div>
+          <div><Sparkles size={19} /><span>{t("Recommendations that feel like you")}</span></div>
+          <div><CalendarDays size={19} /><span>{t("Keep your day in one calm place")}</span></div>
         </div>
       </div>
-      <span className="account-caption">A clear day is a kind of freedom.</span>
+      <span className="account-caption">{t("A clear day is a kind of freedom.")}</span>
     </section>
     <section className="account-form-panel">
       <div className="account-form-wrap">
-        <span className="feature-kicker">Your personal space</span>
-        <h2>{registering ? 'Start your next chapter.' : 'Welcome back.'}</h2>
-        <p className="feature-subtitle">{registering ? 'Create an account. We’ll get to know you in three questions.' : 'A good day starts with a little possibility.'}</p>
-        {!configured && <p className="feature-error" role="alert">Sign-in is not configured yet. Please contact the site owner.</p>}
-        <button className="feature-button secondary full-width" disabled={busy || !configured} onClick={() => void googleSignIn()}><span aria-hidden="true" className="google-letter">G</span> Continue with Google</button>
-        <div className="account-divider"><span>or {registering ? 'register' : 'sign in'} with a password</span></div>
+        {!embedded && <DisplayControls />}
+        <span className="feature-kicker">{t("Your personal space")}</span>
+        <h2>{t(registering ? 'Start your next chapter.' : 'Welcome back.') }</h2>
+        <p className="feature-subtitle">{t(registering ? 'Create an account. We’ll get to know you in three questions.' : 'A good day starts with a little possibility.') }</p>
+        {!configured && <p className="feature-error" role="alert">{t("Sign-in is not configured yet. Please contact the site owner.")}</p>}
+        <button className="feature-button secondary full-width" disabled={busy || !configured} onClick={() => void googleSignIn()}><span aria-hidden="true" className="google-letter">{t("G")}</span> {t("Continue with Google")}</button>
+        <div className="account-divider"><span>{t(registering ? 'or register with a password' : 'or sign in with a password')}</span></div>
         <form onSubmit={(event) => void submit(event)} className="feature-form">
-          <label>{registering ? 'Username' : 'Username or email'}<input autoComplete="username" required maxLength={registering ? 24 : 254} value={identifier} onChange={(event) => setIdentifier(event.target.value)} placeholder={registering ? 'your_username' : 'Enter your username or email'} /></label>
-          {registering && <div><label>Email<input autoComplete="email" type="email" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" aria-describedby="email-purpose" /></label><small id="email-purpose">For account confirmation and recovery.</small></div>}
-          <label>Password<input autoComplete={registering ? 'new-password' : 'current-password'} type="password" required minLength={registering ? 8 : undefined} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={registering ? 'At least 8 characters' : 'Your password'} /></label>
-          {error && <p className="feature-error" role="alert">{error}</p>}
-          {notice && <p className="feature-notice" role="status">{notice}</p>}
-          <button className="feature-button full-width" disabled={busy || !configured} type="submit">{busy ? 'Please wait…' : registering ? 'Create account' : 'Sign in'}<ArrowRight size={17} /></button>
+          <label>{t(registering ? 'Username' : 'Username or email')}<input autoComplete="username" required maxLength={registering ? 24 : 254} value={identifier} onChange={(event) => setIdentifier(event.target.value)} placeholder={t(registering ? 'your_username' : 'Enter your username or email')} /></label>
+          {registering && <div><label>{t("Email")}<input autoComplete="email" type="email" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} placeholder={t("you@example.com")} aria-describedby="email-purpose" /></label><small id="email-purpose">{t("For account confirmation and recovery.")}</small></div>}
+          <label>{t("Password")}<input autoComplete={registering ? 'new-password' : 'current-password'} type="password" required minLength={registering ? 8 : undefined} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={t(registering ? 'At least 8 characters' : 'Your password')} /></label>
+          {error && <p className="feature-error" role="alert">{t(error)}</p>}
+          {notice && <p className="feature-notice" role="status">{t(notice)}</p>}
+          <button className="feature-button full-width" disabled={busy || !configured} type="submit">{t(busy ? 'Please wait…' : registering ? 'Create account' : 'Sign in')}<ArrowRight size={17} /></button>
         </form>
-        <p className="account-switch">{registering ? 'Already have an account?' : 'New to Schedule?'} <button disabled={busy} onClick={() => { setRegistering(!registering); setError(''); setNotice(''); setPassword('') }}>{registering ? 'Sign in instead' : 'Create an account'}</button></p>
+        <p className="account-switch">{t(registering ? 'Already have an account?' : 'New to Schedule?')} <button disabled={busy} onClick={() => { setRegistering(!registering); setError(''); setNotice(''); setPassword('') }}>{t(registering ? 'Sign in instead' : 'Create an account')}</button></p>
       </div>
     </section>
   </main>

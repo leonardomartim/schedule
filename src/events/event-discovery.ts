@@ -3,7 +3,9 @@ import type { EventFilters } from './event-filters'
 
 export interface Coordinates { latitude: number; longitude: number }
 export interface EventSearch { city: string; coordinates?: Coordinates; query: string; radiusKm: number; filters?: EventFilters }
-export interface DiscoveredEvent extends Coordinates {
+export interface DiscoveredEvent {
+  latitude: number | null
+  longitude: number | null
   id: string
   title: string
   description: string
@@ -15,6 +17,7 @@ export interface DiscoveredEvent extends Coordinates {
   currency: string
   url: string | null
   distanceKm?: number
+  source?: 'SP Mais Cultura'
 }
 
 export function distanceInKm(first: Coordinates, second: Coordinates): number {

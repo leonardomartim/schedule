@@ -9,12 +9,27 @@ import { localDateKey } from '../src/event-agenda'
 import { searchCatalogEvents } from '../src/events/event-service'
 
 vi.mock('../src/account/AccountGate', () => ({ AccountGate: ({ children }: { children: (account: SignedInAccount) => ReactNode }) => children({ userId: 'workspace-user', displayName: 'Leo', preferences: { interests: ['music'], radiusKm: 25, budget: 'any' }, onSignOut: vi.fn(), onEditPreferences: vi.fn() }) }))
+vi.mock('../src/events/featured-events', async (importOriginal) => ({ ...await importOriginal<typeof import('../src/events/featured-events')>(), loadFeaturedEvents: vi.fn().mockResolvedValue([]) }))
 vi.mock('../src/account/supabase-client', () => ({ supabase: {} }))
 vi.mock('../src/events/event-service', () => ({ searchCatalogEvents: vi.fn(), requestDeviceLocation: vi.fn() }))
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks() })
 
 describe('post-login workspace', () => {
+  it('translates account navigation and keeps an unfinished agenda draft across language changes', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: /^Today/ }))
+    await user.click(screen.getByRole('button', { name: 'Add to day' }))
+    await user.type(screen.getByLabelText('What needs your attention?'), 'Meu plano')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'pt-BR')
+    expect(screen.getByLabelText('O que precisa da sua atenção?')).toHaveProperty('value', 'Meu plano')
+    expect(screen.getByRole('button', { name: /^Explorar/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Adicionar à agenda' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: /^Lixeira/ }))
+    expect(screen.getByText('As notas ficam aqui até você restaurá-las.')).toBeTruthy()
+  })
   it('keeps the composer open instead of adding a commitment with no time', async () => {
     const user = userEvent.setup()
     render(<App />)

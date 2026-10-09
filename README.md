@@ -10,6 +10,9 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 
 ## MVP features
 
+- Public upcoming events before login, sourced from the official SP Mais Cultura agenda in São Paulo
+- Portuguese/English interface and persistent monochrome light/dark themes, keeping the existing fonts
+- City autocomplete, keyword suggestions and compact filters with manual fallback
 - Supabase Google OAuth and username/email + password accounts with email confirmation
 - Three preference questions after registration: interests, distance, and event budget
 - Nearby upcoming event search with device location or manual city fallback
@@ -28,7 +31,7 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 - Quick notes on the daily view
 - Editable notes workspace; notes and agenda changes persist locally per account on the device
 - Recoverable note deletion with a Trash workspace and restore action
-- Responsive dark interface with warm orange highlights
+- Responsive interface for mobile and desktop
 
 ## Stack
 
@@ -38,6 +41,6 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 - Lucide icons
 - DM Serif Display and DM Sans
 - Vitest
-- Docker and Nginx for deployment
+- Vercel frontend hosting and public event API; Docker/Nginx for static frontend hosting
 
-Implementation, public APIs, migration status and verification: [post-login workspace](docs/post-login-workspace.md). Account and catalog configuration: [Supabase setup](docs/supabase-setup.md).
+Public event source, coverage, language, appearance and deployment: [public homepage](docs/public-event-homepage.md). Account features, migration status and verification: [post-login workspace](docs/post-login-workspace.md). Account and catalog configuration: [Supabase setup](docs/supabase-setup.md).

@@ -6,6 +6,7 @@ import { EventsView } from '../src/events/EventsView'
 import { requestDeviceLocation, searchCatalogEvents } from '../src/events/event-service'
 import { loadLocalWeather, searchPublicCities } from '../src/events/public-location-service'
 
+vi.mock('../src/events/featured-events', async (importOriginal) => ({ ...await importOriginal<typeof import('../src/events/featured-events')>(), loadFeaturedEvents: vi.fn().mockResolvedValue([]) }))
 vi.mock('../src/account/supabase-client', () => ({ supabase: {} }))
 vi.mock('../src/events/event-service', () => ({ searchCatalogEvents: vi.fn(), requestDeviceLocation: vi.fn() }))
 vi.mock('../src/events/public-location-service', () => ({ searchPublicCities: vi.fn(), loadLocalWeather: vi.fn() }))
@@ -14,6 +15,20 @@ afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks() })
 const preferences = { interests: ['music'], radiusKm: 25, budget: 'free' } as const
 
 describe('event search interface', () => {
+  it('refreshes the catalog when clearing a previously submitted strict filter', async () => {
+    const event = { id: 'music', title: 'Concert after clearing', description: '', category: 'music', startsAt: '2027-01-05T18:00:00Z', venue: 'Hall', city: 'São Paulo', latitude: 0, longitude: 0, price: 0, currency: 'BRL', url: null } as const
+    vi.mocked(searchCatalogEvents).mockResolvedValueOnce([]).mockResolvedValueOnce([event])
+    const user = userEvent.setup()
+    render(<EventsView preferences={preferences} />)
+    await user.type(screen.getByLabelText('City'), 'São Paulo')
+    await user.click(screen.getByText('More filters'))
+    await user.selectOptions(screen.getByLabelText('Category'), 'sports')
+    await user.click(screen.getByRole('button', { name: 'Find events' }))
+    await screen.findByText('No upcoming events found.')
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(await screen.findByRole('heading', { name: 'Concert after clearing' })).toBeTruthy()
+    expect(searchCatalogEvents).toHaveBeenLastCalledWith({}, expect.objectContaining({ filters: expect.objectContaining({ category: 'all' }) }), preferences)
+  })
   it('returns to the last search after browsing saved events', async () => {
     vi.mocked(searchCatalogEvents).mockResolvedValue([{ id: 'last-search', title: 'Last search concert', description: '', category: 'music', startsAt: '2027-01-05T18:00:00Z', venue: 'Hall', city: 'São Paulo', latitude: 0, longitude: 0, price: 0, currency: 'BRL', url: null }])
     const user = userEvent.setup()
@@ -31,6 +46,7 @@ describe('event search interface', () => {
     const user = userEvent.setup()
     render(<EventsView preferences={preferences} onEditPreferences={vi.fn()} />)
     await user.type(screen.getByLabelText('City'), 'São Paulo')
+    await user.click(screen.getByText('More filters'))
     await user.selectOptions(screen.getByLabelText('Category'), 'sports')
     await user.selectOptions(screen.getByLabelText('Price'), 'free')
     await user.selectOptions(screen.getByLabelText('Sort by'), 'soonest')

@@ -11,7 +11,7 @@ describe('public location APIs', () => {
     ] }) })
     vi.stubGlobal('fetch', fetchMock)
     const cities = await searchPublicCities(' São Paulo ')
-    expect(cities).toEqual([{ id: 1, label: 'São Paulo, São Paulo, Brazil', latitude: -23.55, longitude: -46.63 }])
+    expect(cities).toEqual([{ id: 1, name: 'São Paulo', label: 'São Paulo, São Paulo, Brazil', latitude: -23.55, longitude: -46.63 }])
     expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('name')).toBe('São Paulo')
     expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
   })

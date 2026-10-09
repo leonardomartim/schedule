@@ -6,6 +6,11 @@ import type { DiscoveredEvent } from '../src/events/event-discovery'
 afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
 const event: DiscoveredEvent = { id: 'concert', title: 'Concert', description: '', category: 'music', startsAt: '2027-01-05T18:00:00Z', venue: 'Hall', city: 'São Paulo', latitude: 0, longitude: 0, price: 0, currency: 'BRL', url: null }
 describe('account saved events', () => {
+  it('round-trips official public events without inventing a price or venue coordinates', () => {
+    const publicEvent: DiscoveredEvent = { ...event, latitude: null, longitude: null, price: null, source: 'SP Mais Cultura' }
+    expect(saveSavedEvents('first', [publicEvent])).toBe(true)
+    expect(loadSavedEvents('first')).toEqual([publicEvent])
+  })
   it('does not persist distances derived from the user search location', () => {
     saveSavedEvents('first', [{ ...event, distanceKm: 1.234 }])
     expect(loadSavedEvents('first')[0]).not.toHaveProperty('distanceKm')

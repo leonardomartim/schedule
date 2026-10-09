@@ -1,6 +1,6 @@
 import type { Coordinates } from './event-discovery'
 
-export interface PublicCity extends Coordinates { id: number; label: string }
+export interface PublicCity extends Coordinates { id: number; label: string; name?: string }
 export interface LocalWeather { temperature: number; description: string }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -25,17 +25,17 @@ async function requestPublicJson(url: URL, failureMessage: string, signal?: Abor
   }
 }
 
-export async function searchPublicCities(query: string, signal?: AbortSignal): Promise<PublicCity[]> {
+export async function searchPublicCities(query: string, signal?: AbortSignal, language: 'en' | 'pt' = 'en'): Promise<PublicCity[]> {
   if (query.trim().length < 2) return []
   const url = new URL('https://geocoding-api.open-meteo.com/v1/search')
-  url.search = new URLSearchParams({ name: query.trim(), count: '5', language: 'en', format: 'json' }).toString()
+  url.search = new URLSearchParams({ name: query.trim(), count: '5', language, format: 'json' }).toString()
   const data = await requestPublicJson(url, 'City lookup is unavailable. You can still search the catalog by city.', signal)
   if (!isRecord(data) || !Array.isArray(data.results)) return []
   return data.results.flatMap((city: unknown): PublicCity[] => {
     if (!isRecord(city) || typeof city.id !== 'number' || typeof city.name !== 'string' ||
       typeof city.latitude !== 'number' || typeof city.longitude !== 'number' || !Number.isFinite(city.latitude) ||
       !Number.isFinite(city.longitude) || Math.abs(city.latitude) > 90 || Math.abs(city.longitude) > 180) return []
-    return [{ id: city.id, label: [city.name, city.admin1, city.country].filter((part): part is string => typeof part === 'string' && part.length > 0).join(', '), latitude: city.latitude, longitude: city.longitude }]
+    return [{ id: city.id, name: city.name, label: [city.name, city.admin1, city.country].filter((part): part is string => typeof part === 'string' && part.length > 0).join(', '), latitude: city.latitude, longitude: city.longitude }]
   })
 }
 

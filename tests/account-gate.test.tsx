@@ -33,6 +33,12 @@ const renderGate = (): void => {
 }
 
 describe('authenticated workspace gating', () => {
+  it('passes an authentication callback failure to the public homepage', async () => {
+    auth.session = null
+    auth.initialize.mockResolvedValue({ error: { message: 'Invalid confirmation link' } })
+    render(<AccountGate signedOutContent={(_authScreen, authenticationError) => <div role="alert">{authenticationError}</div>}>{() => null}</AccountGate>)
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Invalid confirmation link'))
+  })
   it('shows expired confirmation or OAuth callback errors instead of silently showing a blank sign-in form', async () => {
     auth.session = null
     auth.initialize.mockResolvedValue({ error: { message: 'Invalid confirmation link' } })

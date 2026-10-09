@@ -4,20 +4,20 @@
 @theme {
   --font-sans: 'DM Sans', sans-serif;
   --font-display: 'GT Super Display', 'DM Serif Display', Georgia, serif;
-  --color-ink: #171717;
-  --color-surface: #202020;
-  --color-surface-raised: #262626;
-  --color-line: #353535;
-  --color-muted: #99958e;
-  --color-cream: #f4f0e8;
-  --color-orange: #ed7446;
-  --color-sky: #a5c2cc;
-  --color-peach: #d39b73;
-  --color-lilac: #b0a8c5;
-  --color-note-cream: #d6c2a8;
-  --color-note-ink: #282522;
-  --color-note-blue: #526b76;
-  --color-note-blue-ink: #e5eef0;
+  --color-ink: #101010;
+  --color-surface: #181818;
+  --color-surface-raised: #242424;
+  --color-line: #383838;
+  --color-muted: #aaa;
+  --color-cream: #f5f5f5;
+  --color-orange: #f5f5f5;
+  --color-sky: #ccc;
+  --color-peach: #ddd;
+  --color-lilac: #bbb;
+  --color-note-cream: #dedede;
+  --color-note-ink: #202020;
+  --color-note-blue: #353535;
+  --color-note-blue-ink: #f5f5f5;
 }
 
 @layer base {

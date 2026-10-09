@@ -17,11 +17,11 @@ Notes, agenda items and saved events stay on the current browser, separated by a
 
 Public requests have an eight-second timeout, support cancellation, and ignore responses for replaced locations. Weather failure never prevents catalog discovery. Device geolocation is requested only by the location button; city search is available after denial. Search coordinates are not persisted. Weather is current weather, rather than a forecast for the event date.
 
-Upcoming events still require verified, published entries in Supabase. No third-party event provider credentials or fabricated catalog entries were introduced.
+The authenticated catalog requires verified, published entries in Supabase. The public homepage now also loads real events from SP Mais Cultura; see [public homepage](public-event-homepage.md) for coverage and runtime requirements. No fabricated catalog entries were introduced.
 
 ## Structure and unused-file review
 
-- `App.tsx` now gates authentication and loads the account workspace on demand. Event discovery loads separately, keeping it out of the signed-out startup path.
+- `App.tsx` gates the personal workspace and exposes public event discovery before login. Account forms and the workspace load on demand.
 - `workspace/` separates agenda, notes, navigation and shared presentation. `events/` separates filters, cards, persistence and public API access.
 - The old `src/data.ts` demonstration records moved to `tests/fixtures/workspace-seed.ts`; production storage no longer imports them or offers an unused anonymous demo path. Historical anonymous storage keys are untouched.
 - Removed the unused `VITE_APP_NAME` and `VITE_DEFAULT_TIMEZONE` example settings, the panel button without an action, and keyboard-shortcut labels without handlers.

@@ -1,0 +1,17 @@
+:root {
+  --color-ink: #101010; --color-surface: #181818; --color-surface-raised: #242424;
+  --color-line: #383838; --color-muted: #aaa; --color-cream: #f5f5f5; --color-orange: #f5f5f5;
+  --color-sky: #ccc; --color-peach: #ddd; --color-lilac: #bbb;
+  --color-note-cream: #dedede; --color-note-ink: #202020; --color-note-blue: #353535; --color-note-blue-ink: #f5f5f5;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --color-ink: #fff; --color-surface: #f6f6f6; --color-surface-raised: #eaeaea;
+  --color-line: #d6d6d6; --color-muted: #626262; --color-cream: #151515; --color-orange: #151515;
+  --color-sky: #454545; --color-peach: #333; --color-lilac: #555;
+  color-scheme: light;
+}
+.category-quick-filters button:focus-visible, summary:focus-visible, textarea:focus-visible { outline: 2px solid var(--color-cream); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+.feature-button.secondary:hover { background: var(--color-surface-raised); }

@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { usePresentation } from '../presentation/PresentationProvider'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { accountReturnUrl, supabase } from './supabase-client'
 import { accountErrorMessage, type EventPreferences } from './account-validation'
 import { loadAccountProfile, registerAccount, saveAccountPreferences, signInAccount, startGoogleSignIn, type AccountProfile } from './account-service'
-import { AuthScreen } from './AuthScreen'
-import { PreferenceQuestions } from './PreferenceQuestions'
+const AuthScreen = lazy(() => import('./AuthScreen').then((module) => ({ default: module.AuthScreen })))
+const PreferenceQuestions = lazy(() => import('./PreferenceQuestions').then((module) => ({ default: module.PreferenceQuestions })))
 
 export interface SignedInAccount {
   userId: string
@@ -14,7 +15,9 @@ export interface SignedInAccount {
   onEditPreferences: () => void
 }
 
-export function AccountGate({ children }: { children: (account: SignedInAccount) => ReactNode }): ReactNode {
+export function AccountGate({ children, signedOutContent }: { children: (account: SignedInAccount) => ReactNode; signedOutContent?: (authScreen: ReactNode, authenticationError: string) => ReactNode }): ReactNode {
+  const { t } = usePresentation()
+
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
   const [profile, setProfile] = useState<AccountProfile | null>(null)
@@ -63,16 +66,19 @@ export function AccountGate({ children }: { children: (account: SignedInAccount)
     setProfile(null); setSession(null); setError('')
   }
 
-  if (loading) return <div className="account-loading" role="status">Opening your space…</div>
-  if (!session) return <AuthScreen configured={Boolean(supabase)} initialError={error || new URLSearchParams(window.location.search).get('error_description') || ''}
+  if (loading) return <div className="account-loading" role="status">{t("Opening your space…")}</div>
+  if (!session) {
+    const authScreen = <Suspense fallback={<p role="status">{t('Opening your space…')}</p>}><AuthScreen embedded={Boolean(signedOutContent)} configured={Boolean(supabase)} initialError={error || new URLSearchParams(window.location.search).get('error_description') || ''}
     onSignIn={async (identifier, password) => { if (supabase) await signInAccount(supabase, identifier, password) }}
     onRegister={async (fields) => { if (!supabase) return false; const data = await registerAccount(supabase, fields, accountReturnUrl()); return Boolean(data.session) }}
-    onGoogle={async () => { if (supabase) await startGoogleSignIn(supabase, accountReturnUrl()) }} />
-  if (!profile || profile.id !== session.user.id) return <div className="account-loading"><p role={error ? 'alert' : 'status'}>{error || 'Loading your profile…'}</p>{error && <button className="feature-button" onClick={() => setRetry((value) => value + 1)}>Try again</button>}<button className="feature-text-button" onClick={() => void signOut().catch((failure: unknown) => setError(accountErrorMessage(failure)))}>Sign out</button></div>
-  if (!profile.preferences || editingPreferences) return <PreferenceQuestions initialPreferences={profile.preferences ?? undefined} onSignOut={signOut} onCancel={profile.preferences ? () => setEditingPreferences(false) : undefined} onSave={async (preferences) => {
+    onGoogle={async () => { if (supabase) await startGoogleSignIn(supabase, accountReturnUrl()) }} /></Suspense>
+    return signedOutContent ? signedOutContent(authScreen, error) : authScreen
+  }
+  if (!profile || profile.id !== session.user.id) return <div className="account-loading"><p role={error ? 'alert' : 'status'}>{t(error || 'Loading your profile…')}</p>{error && <button className="feature-button" onClick={() => setRetry((value) => value + 1)}>{t("Try again")}</button>}<button className="feature-text-button" onClick={() => void signOut().catch((failure: unknown) => setError(accountErrorMessage(failure)))}>{t("Sign out")}</button></div>
+  if (!profile.preferences || editingPreferences) return <Suspense fallback={<p role="status">{t('Opening your space…')}</p>}><PreferenceQuestions initialPreferences={profile.preferences ?? undefined} onSignOut={signOut} onCancel={profile.preferences ? () => setEditingPreferences(false) : undefined} onSave={async (preferences) => {
     if (!supabase) throw new Error('Account connection unavailable.')
     await saveAccountPreferences(supabase, profile.id, preferences)
     setProfile({ ...profile, preferences }); setEditingPreferences(false)
-  }} />
+  }} /></Suspense>
   return children({ userId: session.user.id, displayName: profile.username || profile.display_name || 'Your space', preferences: profile.preferences, onSignOut: signOut, onEditPreferences: () => setEditingPreferences(true) })
 }
