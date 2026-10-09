@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AccountGate } from '../src/account/AccountGate'
+import { AccountWorkspace } from '../src/workspace/AccountWorkspace'
 import { loadAccountProfile, saveAccountPreferences } from '../src/account/account-service'
 
 interface TestSession { user: { id: string } }
@@ -24,6 +25,7 @@ vi.mock('../src/account/supabase-client', () => ({
 vi.mock('../src/account/account-service', () => ({
   loadAccountProfile: vi.fn(), saveAccountPreferences: vi.fn(), registerAccount: vi.fn(), signInAccount: vi.fn(), startGoogleSignIn: vi.fn(),
 }))
+vi.mock('../src/events/EventsView', () => ({ EventsView: () => <h1>Discover events</h1> }))
 
 const preferences = { interests: ['music'], radiusKm: 25, budget: 'free' } as const
 beforeEach(() => { auth.session = { user: { id: 'first' } }; vi.clearAllMocks(); auth.initialize.mockResolvedValue({ error: null }) })
@@ -33,6 +35,33 @@ const renderGate = (): void => {
 }
 
 describe('authenticated workspace gating', () => {
+  it('signs out through the profile and returns to public events', async () => {
+    vi.mocked(loadAccountProfile).mockResolvedValue({ id: 'first', username: 'leonardo', display_name: null, preferences })
+    auth.signOut.mockResolvedValue({ error: null })
+    render(<AccountGate signedOutContent={() => <h1>Public events</h1>}>{(account) => <AccountWorkspace account={account} />}</AccountGate>)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Open account menu' }))
+    await user.click(screen.getAllByRole('button', { name: 'Sign out' })[1])
+    expect(await screen.findByRole('heading', { name: 'Public events' })).toBeTruthy()
+    expect(auth.signOut).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Open account menu' })).toBeNull()
+  })
+  it('opens saved preferences from the profile, cancels, then saves changes from the sidebar', async () => {
+    vi.mocked(loadAccountProfile).mockResolvedValue({ id: 'first', username: 'leonardo', display_name: null, preferences })
+    vi.mocked(saveAccountPreferences).mockResolvedValue(undefined)
+    render(<AccountGate>{(account) => <AccountWorkspace account={account} />}</AccountGate>)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Open account menu' }))
+    await user.click(screen.getAllByRole('button', { name: 'Preferences' })[1])
+    expect(await screen.findByLabelText('Music')).toHaveProperty('checked', true)
+    expect(screen.getByLabelText('Travel distance')).toHaveProperty('value', '25')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(await screen.findByRole('button', { name: 'Preferences' }))
+    await user.selectOptions(await screen.findByLabelText('Travel distance'), '50')
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }))
+    expect(await screen.findByRole('button', { name: 'Open account menu' })).toBeTruthy()
+    expect(saveAccountPreferences).toHaveBeenCalledWith(expect.anything(), 'first', { ...preferences, radiusKm: 50 })
+  })
   it('passes an authentication callback failure to the public homepage', async () => {
     auth.session = null
     auth.initialize.mockResolvedValue({ error: { message: 'Invalid confirmation link' } })

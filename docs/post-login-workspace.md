@@ -8,6 +8,14 @@ Adding an event creates one agenda commitment on its date and time in the browse
 
 Notes, agenda items and saved events stay on the current browser, separated by account. Malformed records are ignored and failed writes display a session-only warning. There is no cloud synchronization.
 
+## Account navigation
+
+The sidebar stays within the viewport in Explore, Today, Notes and Trash, including long event lists. Its navigation scrolls independently on short screens, keeping Preferences and Sign out accessible. On mobile, the navigation drawer closes after selecting a view or creating a note.
+
+The topbar avatar opens account actions with Preferences and Sign out. The disclosure supports normal Tab navigation, closes on outside interaction or view changes, and restores trigger focus on Escape. Both sign-out controls share pending state, prevent duplicate requests and show errors without hiding the workspace. Successful Supabase sign-out returns to the public event homepage.
+
+Regression tests cover all workspace views, keyboard dismissal, pending/failing logout, public homepage after logout, and preference editing through AccountGate. For visual checks, run the development server and open `/tests/browser/workspace-navigation.html`. This fixture renders the real workspace with explicit local callbacks; it neither creates a Supabase session nor accesses private account data, and is excluded from the production build. Desktop and mobile browser checks verified the footer position, scrolling, menu, preference save and local sign-out. Live private-account actions require signing in with a real account.
+
 ## Public APIs
 
 - [Open-Meteo geocoding](https://open-meteo.com/en/docs/geocoding-api): explicit city lookup with up to five choices, based on GeoNames.

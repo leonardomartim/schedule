@@ -22,6 +22,7 @@ Schedule helps you make room for what matters. See the shape of your day, move t
 - Highlighted search area with OpenStreetMap links and current Open-Meteo weather
 - Public city lookup through Open-Meteo / GeoNames, without API keys
 - Editable account preferences, persistent sessions, and sign-out
+- Persistent workspace navigation and a keyboard-accessible profile menu for preferences and sign-out in every view
 - Daily agenda stacks for morning, afternoon, and evening, with categories, durations, completion states, and progress
 - Add commitments directly to the daily agenda
 - Browse dates, return to today, and remove agenda commitments

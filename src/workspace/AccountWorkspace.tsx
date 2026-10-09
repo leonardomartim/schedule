@@ -25,6 +25,7 @@ export function AccountWorkspace({ account }: { account: SignedInAccount }): Rea
   const [items, setItems] = useState<ScheduleItem[]>(() => loadScheduleItems(account.userId).map((item) => ({ ...item, date: item.date ?? localDateKey(new Date()) })))
   const [notes, setNotes] = useState<Note[]>(() => loadNotes(account.userId))
   const [accountError, setAccountError] = useState('')
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const [agendaSaved, setAgendaSaved] = useState(true)
   const [notesSaved, setNotesSaved] = useState(true)
   const [selectedNote, setSelectedNote] = useState<Note | null>(null)
@@ -50,6 +51,15 @@ export function AccountWorkspace({ account }: { account: SignedInAccount }): Rea
     setItems((currentItems) => currentItems.map((item) => item.id === id ? { ...item, completed: !item.completed } : item))
   }
 
+  async function signOut(): Promise<void> {
+    if (isSigningOut) return
+    setAccountError('')
+    setIsSigningOut(true)
+    try { await account.onSignOut() }
+    catch (error: unknown) { setAccountError(accountErrorMessage(error)) }
+    finally { setIsSigningOut(false) }
+  }
+
   function createScheduleItem(item: Omit<ScheduleItem, 'id' | 'completed'>): void {
     setItems((currentItems) => [...currentItems, { ...item, date: localDateKey(selectedDate), id: Math.max(Date.now(), ...currentItems.map((existing) => existing.id + 1)), completed: false }])
   }
@@ -62,6 +72,7 @@ export function AccountWorkspace({ account }: { account: SignedInAccount }): Rea
     setNotes((currentNotes) => [newNote, ...currentNotes])
     setSelectedNote(newNote)
     setActiveView('Notes')
+    setIsSidebarOpen(false)
   }
 
   function updateNote(noteId: number, changes: Pick<Note, 'title' | 'preview'>): void {
@@ -90,10 +101,10 @@ export function AccountWorkspace({ account }: { account: SignedInAccount }): Rea
 
   return <div className="min-h-screen bg-ink text-cream md:flex">
     <button className={`${iconButtonClassName} fixed top-5 left-4 z-30 bg-surface md:hidden`} aria-label={t("Open navigation")} onClick={() => setIsSidebarOpen(true)}><Menu size={20} /></button>
-    <Sidebar account={account} onSignOut={() => { void account.onSignOut().catch((error: unknown) => setAccountError(accountErrorMessage(error))) }} activeView={activeView} activeNoteCount={activeNotes.length} itemCount={scheduleProgress.total} isOpen={isSidebarOpen} onCreateNote={createNote} onSelectView={chooseView} trashCount={trashedNotes.length} />
+    <Sidebar account={account} onSignOut={() => void signOut()} isSigningOut={isSigningOut} activeView={activeView} activeNoteCount={activeNotes.length} itemCount={scheduleProgress.total} isOpen={isSidebarOpen} onCreateNote={createNote} onSelectView={chooseView} trashCount={trashedNotes.length} />
     {isSidebarOpen && <button className="fixed inset-0 z-30 bg-black/50 md:hidden" aria-label={t("Close navigation")} onClick={() => setIsSidebarOpen(false)} />}
     <main className="min-w-0 flex-1 px-4 pb-10 md:px-6 lg:px-13 lg:pb-16">
-      <Topbar displayName={account.displayName} activeView={activeView} searchTerm={searchTerm} onSearchChange={setSearchTerm} timeLabel={localClock.timeLabel} timeZoneLabel={localClock.timeZoneLabel} />
+      <Topbar displayName={account.displayName} activeView={activeView} isSigningOut={isSigningOut} onEditPreferences={account.onEditPreferences} onSignOut={() => void signOut()} searchTerm={searchTerm} onSearchChange={setSearchTerm} timeLabel={localClock.timeLabel} timeZoneLabel={localClock.timeZoneLabel} />
       {accountError && <p className="feature-error" role="alert">{t(accountError)}</p>}
       {(!agendaSaved || !notesSaved) && <p className="feature-error" role="alert">{t("Browser storage is unavailable. Your latest changes are kept only for this session.")}</p>}
       {activeView === 'Explore' && <Suspense fallback={<p role="status">{t("Opening event discovery…")}</p>}><EventsView userId={account.userId} preferences={account.preferences} onEditPreferences={account.onEditPreferences} onAddToAgenda={addDiscoveredEvent} agendaEventIds={items.flatMap((item) => item.eventId ? [item.eventId] : [])} /></Suspense>}

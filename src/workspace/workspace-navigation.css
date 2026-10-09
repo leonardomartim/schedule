@@ -1,0 +1,39 @@
+.workspace-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  height: 100dvh;
+  visibility: hidden;
+  transform: translateX(-100%);
+  transition: transform .2s ease;
+}
+.workspace-sidebar[data-open="true"] { visibility: visible; transform: translateX(0); }
+.workspace-navigation-links { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.workspace-navigation-footer { flex-shrink: 0; padding-top: 16px; }
+.workspace-topbar { position: sticky; top: 0; z-index: 20; background: var(--color-ink); }
+.workspace-account { position: relative; flex-shrink: 0; }
+.workspace-account-trigger { display: flex; border-radius: 50%; }
+.workspace-account-trigger:hover { box-shadow: 0 0 0 3px var(--color-line); }
+.workspace-account-trigger:focus-visible, .workspace-account-panel button:focus-visible { outline: 2px solid var(--color-cream); outline-offset: 3px; }
+.workspace-account-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  width: 240px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 36px #0003;
+}
+.workspace-account-identity { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 14px; border-bottom: 1px solid var(--color-line); }
+.workspace-account-identity strong { overflow-wrap: anywhere; font-size: 14px; }
+.workspace-account-identity span { color: var(--color-muted); font-size: 12px; }
+.workspace-account-panel button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px; border-radius: 6px; text-align: left; font-size: 14px; }
+.workspace-account-panel button:hover { background: var(--color-surface-raised); }
+.workspace-account-panel button:disabled, .workspace-navigation-footer button:disabled { cursor: wait; opacity: .6; }
+@media (min-width: 768px) {
+  .workspace-sidebar { position: sticky; top: 0; flex: 0 0 250px; align-self: flex-start; visibility: visible; transform: none; }
+}
+@media (max-width: 639px) { .workspace-breadcrumb > span { display: none; } }
+@media (max-height: 640px) { .workspace-navigation-promo { display: none; } }

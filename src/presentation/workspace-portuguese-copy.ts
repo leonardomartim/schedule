@@ -1,4 +1,5 @@
 export const workspacePortugueseCopy: Readonly<Record<string, string>> = {
+  'Open account menu': 'Abrir menu da conta', 'Account actions': 'Ações da conta', 'Signing out…': 'Saindo…',
   'Explore': 'Explorar', 'Today': 'Hoje', 'Notes': 'Notas', 'Trash': 'Lixeira', 'Workspace': 'Meu espaço', 'New note': 'Nova nota', 'Main navigation': 'Navegação principal', 'Close navigation': 'Fechar navegação', 'Open navigation': 'Abrir navegação',
   'Make room for you': 'Abra espaço para você', 'Find your next good plan.': 'Encontre seu próximo programa.', 'Preferences': 'Preferências', 'Personal space': 'Espaço pessoal', 'Search your day': 'Buscar no seu dia',
   'Untitled note': 'Nota sem título', 'Start writing something down...': 'Comece a escrever...', 'Just now': 'Agora', 'Opening event discovery…': 'Abrindo os eventos…',
